@@ -7,3 +7,5 @@ cmake_minimum_required (VERSION 3.8)
 add_executable (twmailer-client "twmailer-client.cpp" "twmailer-client.h" )
 
 # TODO: Add tests and install targets if needed.
+
+set_property(TARGET "twmailer-client" PROPERTY CXX_STANDARD 17)
