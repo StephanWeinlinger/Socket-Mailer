@@ -78,20 +78,24 @@ void Socket::shutdown(int fd) {
     }
 }
 
-int Socket::_buffersize = 100;
+int Socket::_buffersize = 1024;
 
 // might be complete shit
-std::string Socket::recv(int fd) {
-    char buffer[_buffersize];
+int Socket::recv(int fd, char *buffer) {
     int size = ::recv(fd, buffer, _buffersize - 1, 0);
     if (size == -1) {
-        throw "Socket couldn't read data";
+        //throw "Socket couldn't read data";
+        std::cerr << "Socket couldn't read data" << std::endl;
     } else if (size == 0) {
-        throw "Connection closed remote socket";
+        //throw "Connection closed remote socket";
+        std::cerr << "Connection closed remote socket" << std::endl;
     }
-    return std::string(buffer); // don't know if this works
+    buffer[size] = '\0'; // add null terminator on last index
+    return size;
 }
 
+// currently sending way too much at once
+// maybe change it like recv above (error handling)
 void Socket::send(int fd, std::string input) {
     int total = 0;
     int bytesleft = input.length();
@@ -99,7 +103,8 @@ void Socket::send(int fd, std::string input) {
     while (total < input.length()) {
         current = ::send(fd, input.c_str() + total, bytesleft, 0);
         if (current == -1) {
-            throw "Socket couldn't send data";
+            //throw "Socket couldn't send data";
+            std::cerr << "Socket couldn't send data" << std::endl;
         }
         total = total + current;
         bytesleft = bytesleft - current;

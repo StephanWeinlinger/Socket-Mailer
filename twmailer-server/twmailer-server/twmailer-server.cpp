@@ -2,17 +2,20 @@
 #include <filesystem>
 #include <thread>
 #include "../../shared/socket.h"
+#include "commands.h"
 #include <sys/wait.h>
 
 namespace fs = std::filesystem;
 
 void printUsage();
-void startCommunication(int fd);
+void startCommunication();
 void signalHandler(int sig);
 void shutdownServer();
 
 // only global because shutdown function needs it
-int welcome_socket;
+int welcome_socket = -1;
+int client_socket = -1;
+sig_atomic_t abortRequested = 0;
 
 int main(int argc, char* argv[]) {
 	if (argc != 3) {
@@ -24,7 +27,11 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	if (signal(SIGINT, signalHandler) == SIG_ERR) {
+	struct sigaction sa;
+	sa.sa_handler = signalHandler;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	if (sigaction(SIGINT, &sa, NULL) == -1) {
 		std::cerr << "signal could not be registered" << std::endl;
 		return EXIT_FAILURE;
 	}
@@ -45,23 +52,26 @@ int main(int argc, char* argv[]) {
 		// listen for incoming connections on welcome socket
 		// allow 5 queued connections max
 		Socket::listen(welcome_socket, 5);
-		// loop for accepting connections
 		// TODO: implement quit functionality
-		while (true) {
+		while (!abortRequested) {
+			std::cout << "Waiting for connections..." << std::endl;
 			struct sockaddr_in client_address;
-			int client_fd = Socket::accept(welcome_socket, client_address);
+			client_socket = Socket::accept(welcome_socket, client_address);
 			std::cout << "Client connected from " << inet_ntoa(client_address.sin_addr) << " on port " << ntohs(client_address.sin_port) << std::endl;
-			// TODO add client counter and shared variable to notify threads that they have to shut down and count the variable down maybe
-			// and only really end the programm if the counter reaches 0
-			// but start by closing the welcome socket, so that no new clients can connect
-			std::thread(startCommunication, client_fd).detach();
-			// no join, since welcome socket waits anyway
+			if (!abortRequested) {
+				startCommunication();
+			}
 		}
 	}
 	// shit solution TODO: make it better
 	catch (const char* msg) {
 		std::cout << msg << std::endl;
 		shutdownServer();
+	}
+
+	// make sure welcome socket gets shut down
+	if (welcome_socket != -1) {
+		Socket::shutdown(welcome_socket);
 	}
 	return EXIT_SUCCESS;
 }
@@ -71,22 +81,39 @@ void printUsage() {
 	exit(EXIT_FAILURE);
 }
 
-void startCommunication(int fd) {
-	while (1) {
-		std::cout << "heartbeat" << std::endl;
-		sleep(5);
+void startCommunication() {
+	// send welcome message
+	std::string input = "Welcome to the mail server!\nHave fun!\n";
+	Socket::send(client_socket, input);
+	char buffer[1024];
+	do {
+		int size = Socket::recv(client_socket, buffer);
+		if (size == 0 || size == -1) {
+			break;
+		};
+		std::cout << buffer << std::endl;
+	} while(!abortRequested && strcmp(buffer, "quit") != 0);
+
+	if (!abortRequested) {
+		Socket::shutdown(client_socket); // shutdown client
+		client_socket = -1;
 	}
-	// start communication
 }
 
 void signalHandler(int sig) {
-	// do you really need to check this?
-	if (sig == SIGINT) {
-		std::cout << "Shutting server down..." << std::endl;
-		shutdownServer();
-	}
+	abortRequested = 1;
+	std::cout << "\nShutting server down..." << std::endl;
+	shutdownServer();
 }
 
 void shutdownServer() {
-	Socket::shutdown(welcome_socket);
+	if (welcome_socket != -1) {
+		Socket::shutdown(welcome_socket);
+		welcome_socket = -1;
+
+	}
+	if (client_socket != -1) {
+		Socket::shutdown(client_socket);
+		client_socket = -1;
+	}
 }
