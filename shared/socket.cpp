@@ -80,23 +80,33 @@ void Socket::shutdown(int fd) {
 
 int Socket::_buffersize = 1024;
 
-// might be complete shit
-int Socket::recv(int fd, char *buffer) {
+// buffer gets the data received
+// if sendAck is true an acknowledgement gets sent
+// isAlive gets set to false if the connected client or server disconnected
+void Socket::recv(int fd, char *buffer, bool sendAck, bool &isAlive) {
     int size = ::recv(fd, buffer, _buffersize - 1, 0);
     if (size == -1) {
         //throw "Socket couldn't read data";
         std::cerr << "Socket couldn't read data" << std::endl;
+        isAlive = false; // maybe no termination needed, not sure
+        return;
     } else if (size == 0) {
         //throw "Connection closed remote socket";
         std::cerr << "Connection closed remote socket" << std::endl;
+        isAlive = false;
+        return;
     }
     buffer[size] = '\0'; // add null terminator on last index
-    return size;
+    if (sendAck) {
+        Socket::send(fd, "OK", false, isAlive);
+    }
 }
 
-// currently sending way too much at once
-// maybe change it like recv above (error handling)
-void Socket::send(int fd, std::string input) {
+// input holds data that needs to be sent
+// if awaitAck is true the client or server waits for an answer ("OK", but doesn't get checked)
+// isAlive is used if an acknowledgement is waited for, sinced its used in Socket::recv()
+// isAlive is useless if awaitAck is set to false (TODO: maybe make another function)
+void Socket::send(int fd, std::string input, bool awaitAck, bool &isAlive) {
     int total = 0;
     int bytesleft = input.length();
     int current;
@@ -108,5 +118,10 @@ void Socket::send(int fd, std::string input) {
         }
         total = total + current;
         bytesleft = bytesleft - current;
+    }
+    if (awaitAck) {
+        char buffer[_buffersize];
+        Socket::recv(fd, buffer, false, isAlive);
+        // buffer could be checked if it contains OK, but not really needed
     }
 }

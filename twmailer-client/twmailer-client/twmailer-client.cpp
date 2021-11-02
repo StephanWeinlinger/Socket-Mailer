@@ -55,9 +55,10 @@ void printUsage() {
 void startCommunication() {
 	// get welcome message
 	char buffer[1024];
-	Socket::recv(client_socket, buffer);
+	bool isAlive = true;
+	Socket::recv(client_socket, buffer, false, isAlive);
 	std::cout << buffer;
-	while (!abortRequested) {
+	while (!abortRequested && isAlive) {
 		std::cout << ">> ";
 		if (fgets(buffer, 1024, stdin) != NULL) {
 			int size = strlen(buffer);
@@ -70,15 +71,16 @@ void startCommunication() {
 				buffer[size] = 0;
 			}
 			if (strcmp(buffer, "SEND") == 0) {
-				std::cout << buffer << std::endl;
+				Commands::send(client_socket, isAlive);
 			} else if (strcmp(buffer, "LIST") == 0) {
-				std::cout << buffer << std::endl;
+				Commands::list(client_socket, isAlive);
 			} else if (strcmp(buffer, "READ") == 0) {
-				std::cout << buffer << std::endl;
+				Commands::read(client_socket, isAlive);
 			} else if (strcmp(buffer, "DEL") == 0) {
-				std::cout << buffer << std::endl;
+				Commands::del(client_socket, isAlive);
 			} else if (strcmp(buffer, "QUIT") == 0) {
-				std::cout << buffer << std::endl;
+				Commands::quit(client_socket, isAlive);
+				break;
 			} else {
 				std::cout << "Valid commands: [SEND] [LIST] [READ] [DEL] [QUIT]" << std::endl;
 			}

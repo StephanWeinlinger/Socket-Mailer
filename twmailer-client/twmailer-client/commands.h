@@ -2,9 +2,9 @@
 
 class Commands {
 public:
-	static void send(int fd);
-	static void list(int fd);
-	static void read(int fd);
-	static void del(int fd);
-	static void quit(int fd);
+	static void send(int fd, bool &isAlive);
+	static void list(int fd, bool& isAlive);
+	static void read(int fd, bool& isAlive);
+	static void del(int fd, bool& isAlive);
+	static void quit(int fd, bool& isAlive);
 };

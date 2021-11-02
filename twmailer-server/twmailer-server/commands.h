@@ -6,5 +6,4 @@ public:
 	static void list(int fd);
 	static void read(int fd);
 	static void del(int fd);
-	static void quit(int fd);
 };
