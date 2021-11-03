@@ -27,7 +27,10 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 	Commands::_spool = std::string(argv[2]);
-	std::cout << Commands::_spool << std::endl;
+	if (Commands::_spool[Commands::_spool.length()] != '/') {
+		Commands::_spool = Commands::_spool + "/";
+	}
+
 	struct sigaction sa;
 	sa.sa_handler = signalHandler;
 	sa.sa_flags = 0;
