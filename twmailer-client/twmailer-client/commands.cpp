@@ -1,4 +1,5 @@
 #include "commands.h"
+#include <sstream>
 
 void Commands::send(int fd, bool &isAlive) {
 	Socket::send(fd, "SEND", true, isAlive);
@@ -13,7 +14,7 @@ void Commands::send(int fd, bool &isAlive) {
 	for (int i = 0; i < 3; ++i) {
 		std::string input;
 		std::cout << text[i];
-		std::cin >> input;
+		std::getline(std::cin, input);
 		// also restricts sender and receiver length
 		if (input.length() > 80) {
 			std::cout << "Input may not be longer than 80 characters" << std::endl;
@@ -25,7 +26,6 @@ void Commands::send(int fd, bool &isAlive) {
 			return;
 		}
 	}
-	fgetc(stdin); // remove \n from std::cin
 	char buffer[1024];
 	while (true) {
 		if (fgets(buffer, 1024, stdin) != NULL) {

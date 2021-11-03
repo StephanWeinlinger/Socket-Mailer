@@ -12,7 +12,6 @@ void startCommunication();
 void signalHandler(int sig);
 void shutdownServer();
 
-// only global because shutdown function needs it
 int welcome_socket = -1;
 int client_socket = -1;
 sig_atomic_t abortRequested = 0;
@@ -26,6 +25,8 @@ int main(int argc, char* argv[]) {
 		std::cerr << "mail-spool-directory path invalid" << std::endl;
 		return EXIT_FAILURE;
 	}
+
+	// set spool directory and add slash if needed
 	Commands::_spool = std::string(argv[2]);
 	if (Commands::_spool[Commands::_spool.length()] != '/') {
 		Commands::_spool = Commands::_spool + "/";
@@ -56,7 +57,6 @@ int main(int argc, char* argv[]) {
 		// listen for incoming connections on welcome socket
 		// allow 5 queued connections max
 		Socket::listen(welcome_socket, 5);
-		// TODO: implement quit functionality
 		while (!abortRequested) {
 			std::cout << "Waiting for connections..." << std::endl;
 			struct sockaddr_in client_address;
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}
-	// shit solution TODO: make it better
+	// TODO: use actually exceptions and not just strings
 	catch (const char* msg) {
 		std::cout << msg << std::endl;
 	}

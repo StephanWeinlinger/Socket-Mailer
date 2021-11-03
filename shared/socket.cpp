@@ -65,7 +65,6 @@ void Socket::connect(int fd, const struct sockaddr_in &addr) {
 }
 
 // shutdown and close socket
-// doesn't throw exception on error since close could still work? TODO: find out
 void Socket::shutdown(int fd) {
     if (::shutdown(fd, SHUT_RDWR) == -1) {
         //throw "Socket couldn't shutdown";
@@ -105,7 +104,6 @@ void Socket::recv(int fd, char *buffer, bool sendAck, bool &isAlive) {
 // input holds data that needs to be sent
 // if awaitAck is true the client or server waits for an answer ("OK", but doesn't get checked)
 // isAlive is used if an acknowledgement is waited for, sinced its used in Socket::recv()
-// isAlive is useless if awaitAck is set to false (TODO: maybe make another function)
 void Socket::send(int fd, std::string input, bool awaitAck, bool &isAlive) {
     int total = 0;
     int bytesleft = input.length();
