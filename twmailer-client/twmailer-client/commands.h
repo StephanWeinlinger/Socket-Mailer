@@ -1,4 +1,5 @@
 #include "../../shared/socket.h"
+#include <vector>
 
 class Commands {
 public:

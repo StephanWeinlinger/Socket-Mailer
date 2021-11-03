@@ -90,13 +90,13 @@ void startCommunication() {
 			break;
 		}
 		if (strcmp(buffer, "SEND") == 0) {
-			Commands::send(client_socket);
+			Commands::send(client_socket, isAlive);
 		} else if (strcmp(buffer, "LIST") == 0) {
-			Commands::list(client_socket);
+			Commands::list(client_socket, isAlive);
 		} else if (strcmp(buffer, "READ") == 0) {
-			Commands::read(client_socket);
+			Commands::read(client_socket, isAlive);
 		} else if (strcmp(buffer, "DEL") == 0) {
-			Commands::del(client_socket);
+			Commands::del(client_socket, isAlive);
 		} else if (strcmp(buffer, "QUIT") == 0) {
 			break;
 		}
