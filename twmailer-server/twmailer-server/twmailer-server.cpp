@@ -26,8 +26,8 @@ int main(int argc, char* argv[]) {
 		std::cerr << "mail-spool-directory path invalid" << std::endl;
 		return EXIT_FAILURE;
 	}
-	Commands::_spool = argv[2];
-
+	Commands::_spool = std::string(argv[2]);
+	std::cout << Commands::_spool << std::endl;
 	struct sigaction sa;
 	sa.sa_handler = signalHandler;
 	sa.sa_flags = 0;

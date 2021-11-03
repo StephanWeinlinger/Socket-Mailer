@@ -1,5 +1,7 @@
 #include "commands.h"
 
+std::string Commands::_spool;
+
 void Commands::send(int fd, bool& isAlive) {
 	char buffer[1024];
 	std::vector<std::string> output;
