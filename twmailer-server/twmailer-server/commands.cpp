@@ -1,5 +1,6 @@
 #include "commands.h"
 #include <filesystem>
+#include <fstream>
 
 std::string Commands::_spool;
 
@@ -23,18 +24,37 @@ void Commands::send(int fd, bool& isAlive) {
 		}
 		output.push_back(std::string(buffer));
 	}
-	// output contains everything
 
-	auto dir = std::filesystem::create_directory(Commands::_spool + output[1]); 
-	if (dir) {
-		std::cout << "directory sucsessfull created! " << std::endl;
-		;
+	std::string path = Commands::_spool + output[1];
+
+	if (!std::filesystem::is_directory(path))
+	{
+		bool dir = std::filesystem::create_directory(path); // Check if Ordner with this name already exist
+		if (dir) {
+			std::cout << "directory sucsessfull created! " << std::endl;
+			;
+		}
+		else {
+			std::cout << "directory creation failed!" << std::endl;
+		}
+	}
+	
+	//Creating txt Data and writing into the file
+	std::fstream output_fstream;
+
+	output_fstream.open(path + "/" + output[0], std::fstream::out);
+	if (!output_fstream.is_open()) {
+		std::cerr << "Failed to open " << path << '\n';
 	}
 	else {
-		std::cout << "directory creation failed!" << std::endl;
+		for(std::string i : output)
+		{
+			output_fstream << i << std::endl;
+
+		}
+		std::cout << "done" << std::endl;
 	}
-
-
+	output_fstream.close();
 }
 
 void Commands::list(int fd, bool& isAlive) {}
