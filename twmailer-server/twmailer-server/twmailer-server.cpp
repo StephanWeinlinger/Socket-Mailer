@@ -66,13 +66,10 @@ int main(int argc, char* argv[]) {
 	// shit solution TODO: make it better
 	catch (const char* msg) {
 		std::cout << msg << std::endl;
-		shutdownServer();
 	}
-
-	// make sure welcome socket gets shut down
-	if (welcome_socket != -1) {
-		Socket::shutdown(welcome_socket);
-	}
+	// if exception occurs client has to get shut down too
+	// on normal termination only the server gets shutdown right here
+	shutdownServer();
 	return EXIT_SUCCESS;
 }
 
