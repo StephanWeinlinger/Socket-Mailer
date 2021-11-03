@@ -32,7 +32,6 @@ void Commands::send(int fd, bool& isAlive) {
 		bool dir = std::filesystem::create_directory(path); // Check if Ordner with this name already exist
 		if (dir) {
 			std::cout << "directory sucsessfull created! " << std::endl;
-			;
 		}
 		else {
 			std::cout << "directory creation failed!" << std::endl;
@@ -57,7 +56,15 @@ void Commands::send(int fd, bool& isAlive) {
 	output_fstream.close();
 }
 
-void Commands::list(int fd, bool& isAlive) {}
+void Commands::list(int fd, bool& isAlive) {
+	char buffer[1024];
+	Socket::recv(fd, buffer, true, isAlive);
+	if (!isAlive) {
+		return;
+	}
+	std::string username = buffer;
+	std::cout << username << std::endl;
+}
 
 void Commands::read(int fd, bool& isAlive) {}
 

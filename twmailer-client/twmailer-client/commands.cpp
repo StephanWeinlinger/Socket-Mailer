@@ -47,7 +47,23 @@ void Commands::send(int fd, bool &isAlive) {
 }
 
 void Commands::list(int fd, bool& isAlive) {
-	//Socket::send(fd, "LIST");
+	Socket::send(fd, "LIST", true, isAlive);
+	if (!isAlive) {
+		return;
+	}
+	std::string input;
+	while (true) {
+		std::cout << "Username: ";
+		std::cin >> input;
+		if (input.length() <= 80) {
+			break;
+		}
+		std::cout << "Input may not be longer than 80 characters" << std::endl;
+	}
+	Socket::send(fd, input, true, isAlive);
+	if (!isAlive) {
+		return;
+	}
 }
 
 void Commands::read(int fd, bool& isAlive) {
