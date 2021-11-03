@@ -60,15 +60,8 @@ void startCommunication() {
 	while (!abortRequested && isAlive) {
 		std::cout << ">> ";
 		if (fgets(buffer, 1024, stdin) != NULL) {
-			int size = strlen(buffer);
 			// remove new-line signs from string at the end
-			if (buffer[size - 2] == '\r' && buffer[size - 1] == '\n') {
-				size -= 2;
-				buffer[size] = 0;
-			} else if (buffer[size - 1] == '\n') {
-				--size;
-				buffer[size] = 0;
-			}
+			buffer[strcspn(buffer, "\r\n")] = 0;
 			if (strcmp(buffer, "SEND") == 0) {
 				Commands::send(client_socket, isAlive);
 			} else if (strcmp(buffer, "LIST") == 0) {

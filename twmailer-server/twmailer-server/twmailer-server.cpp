@@ -86,9 +86,6 @@ void startCommunication() {
 	Socket::send(client_socket, input, false, isAlive);
 	do {
 		Socket::recv(client_socket, buffer, true, isAlive);
-		if (!isAlive) {
-			break;
-		}
 		if (strcmp(buffer, "SEND") == 0) {
 			Commands::send(client_socket, isAlive);
 		} else if (strcmp(buffer, "LIST") == 0) {
@@ -100,7 +97,7 @@ void startCommunication() {
 		} else if (strcmp(buffer, "QUIT") == 0) {
 			break;
 		}
-	} while(!abortRequested);
+	} while(!abortRequested && isAlive);
 
 	if (!abortRequested) {
 		Socket::shutdown(client_socket); // shutdown client

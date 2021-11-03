@@ -2,25 +2,25 @@
 
 void Commands::send(int fd, bool& isAlive) {
 	char buffer[1024];
-	std::vector<std::string> output; // or just put it in the file instantly
+	std::vector<std::string> output;
 	for (int i = 0; i < 3; ++i) {
 		Socket::recv(fd, buffer, true, isAlive);
 		if (!isAlive) {
 			return;
 		}
-		std::cout << buffer << std::endl;
 		output.push_back(std::string(buffer));
 	}
-	/*while (true) {
+	while (true) {
 		Socket::recv(fd, buffer, true, isAlive);
 		if (!isAlive) {
 			return;
 		}
-		std::cout << std::string(buffer) << std::endl;
-	}*/
-
-	// vector will include the rest of the text, but that doesn't work right now
-
+		if (strcmp(buffer, ".") == 0) {
+			break;
+		}
+		output.push_back(std::string(buffer));
+	}
+	// output contains everything
 }
 
 void Commands::list(int fd, bool& isAlive) {}

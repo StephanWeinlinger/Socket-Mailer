@@ -25,12 +25,12 @@ void Commands::send(int fd, bool &isAlive) {
 			return;
 		}
 	}
-	/*char buffer[1024];
+	fgetc(stdin); // remove \n from std::cin
+	char buffer[1024];
 	while (true) {
 		if (fgets(buffer, 1024, stdin) != NULL) {
-			int size = strlen(buffer);
-			buffer[size - 1] = '\0';
-			std::cout << size << std::endl;
+			// remove new-line signs from string at the end
+			buffer[strcspn(buffer, "\r\n")] = 0;
 			if (strcmp(buffer, ".") == 0) {
 				Socket::send(fd, ".", true, isAlive);
 				if (!isAlive) {
@@ -38,13 +38,12 @@ void Commands::send(int fd, bool &isAlive) {
 				}
 				break;
 			}
-			std::cout << buffer << std::endl;
 			Socket::send(fd, std::string(buffer), true, isAlive);
 			if (!isAlive) {
 				return;
 			}
 		}
-	}*/
+	}
 }
 
 void Commands::list(int fd, bool& isAlive) {
