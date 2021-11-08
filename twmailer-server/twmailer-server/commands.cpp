@@ -1,43 +1,49 @@
 #include "commands.h"
-#include <filesystem>
-#include <fstream>
 
 std::string Commands::_spool;
 
 void Commands::send(int fd, bool& isAlive) {
-	char buffer[1024];
-	std::vector<std::string> output;
+	std::string output;
+	std::vector<std::string> outputAll;
 	for (int i = 0; i < 3; ++i) {
-		Socket::recv(fd, buffer, true, isAlive);
+		Socket::recv(fd, output, true, isAlive);
+		if (i < 2) {
+			if (Validation::validateUsername(output)) {
+				isAlive = false;
+			}
+		} else if (Validation::validateSubject(output)) {
+			// subject is too long, shut client down
+			isAlive = false;
+		}
 		if (!isAlive) {
 			return;
 		}
-		output.push_back(std::string(buffer));
+		outputAll.push_back(output);
 	}
 	while (true) {
-		Socket::recv(fd, buffer, true, isAlive);
+		Socket::recv(fd, output, true, isAlive);
 		if (!isAlive) {
 			return;
 		}
-		if (strcmp(buffer, ".") == 0) {
+		if (output.compare(".") == 0) {
 			break;
 		}
-		output.push_back(std::string(buffer));
+		outputAll.push_back(output);
 	}
 
-	std::string path = Commands::_spool + output[1];
+	std::string path = Commands::_spool + outputAll[1];
 	if (!std::filesystem::is_directory(path)) {
 		std::filesystem::create_directory(path);
 	}
 	
 	std::fstream output_fstream;
 	// TODO: filename gets replaced with uuid in the future
-	output_fstream.open(path + "/" + output[0], std::fstream::out);
+	output_fstream.open(path + "/" + outputAll[0], std::fstream::out);
 	if (!output_fstream.is_open()) {
 		std::cerr << "Failed to open " << path << '\n';
 	}
 	else {
-		for(std::string i : output) {
+		for(std::string i : outputAll) {
 			output_fstream << i << std::endl;
 		}
 	}
@@ -45,12 +51,14 @@ void Commands::send(int fd, bool& isAlive) {
 }
 
 void Commands::list(int fd, bool& isAlive) {
-	char buffer[1024];
-	Socket::recv(fd, buffer, true, isAlive);
-	if (!isAlive) {
+	std::string output;
+	Socket::recv(fd, output, true, isAlive);
+	if (!isAlive || Validation::validateUsername(output)) {
+		// if client trys to send invalid data shut it down
+		isAlive = false;
 		return;
 	}
-	std::string username = buffer;
+	std::string username = output;
 	std::cout << username << std::endl;
 
 	// not working yet

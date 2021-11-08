@@ -82,7 +82,8 @@ int Socket::_buffersize = 1024;
 // buffer gets the data received
 // if sendAck is true an acknowledgement gets sent
 // isAlive gets set to false if the connected client or server disconnected
-void Socket::recv(int fd, char *buffer, bool sendAck, bool &isAlive) {
+void Socket::recv(int fd, std::string &output, bool sendAck, bool &isAlive) {
+    char buffer[_buffersize];
     int size = ::recv(fd, buffer, _buffersize - 1, 0);
     if (size == -1) {
         //throw "Socket couldn't read data";
@@ -96,6 +97,7 @@ void Socket::recv(int fd, char *buffer, bool sendAck, bool &isAlive) {
         return;
     }
     buffer[size] = '\0'; // add null terminator on last index
+    output = buffer;
     if (sendAck) {
         Socket::send(fd, "OK", false, isAlive);
     }
@@ -117,9 +119,13 @@ void Socket::send(int fd, std::string input, bool awaitAck, bool &isAlive) {
         total = total + current;
         bytesleft = bytesleft - current;
     }
-    if (awaitAck) {
-        char buffer[_buffersize];
-        Socket::recv(fd, buffer, false, isAlive);
-        // buffer could be checked if it contains OK, but not really needed
+    // length check, since receiver wouldn't answer
+    if (input.length() > 0) {
+        if (awaitAck) {
+            std::string output;
+            Socket::recv(fd, output, false, isAlive);
+            // buffer could be checked if it contains OK, but not really needed
+        }
+
     }
 }

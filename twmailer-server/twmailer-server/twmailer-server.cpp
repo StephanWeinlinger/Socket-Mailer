@@ -83,22 +83,22 @@ void printUsage() {
 }
 
 void startCommunication() {
-	char buffer[1024];
+	std::string output;
 	bool isAlive = true;
 	// send welcome message
 	std::string input = "Welcome to the mail server!\nHave fun!\n";
 	Socket::send(client_socket, input, false, isAlive);
 	do {
-		Socket::recv(client_socket, buffer, true, isAlive);
-		if (strcmp(buffer, "SEND") == 0) {
+		Socket::recv(client_socket, output, true, isAlive);
+		if (output.compare("SEND") == 0) {
 			Commands::send(client_socket, isAlive);
-		} else if (strcmp(buffer, "LIST") == 0) {
+		} else if (output.compare("LIST") == 0) {
 			Commands::list(client_socket, isAlive);
-		} else if (strcmp(buffer, "READ") == 0) {
+		} else if (output.compare("READ") == 0) {
 			Commands::read(client_socket, isAlive);
-		} else if (strcmp(buffer, "DEL") == 0) {
+		} else if (output.compare("DEL") == 0) {
 			Commands::del(client_socket, isAlive);
-		} else if (strcmp(buffer, "QUIT") == 0) {
+		} else if (output.compare("QUIT") == 0) {
 			break;
 		}
 	} while(!abortRequested && isAlive);

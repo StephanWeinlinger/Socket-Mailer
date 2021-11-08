@@ -1,5 +1,4 @@
 #include "commands.h"
-#include <sstream>
 
 void Commands::send(int fd, bool &isAlive) {
 	Socket::send(fd, "SEND", true, isAlive);
@@ -11,13 +10,18 @@ void Commands::send(int fd, bool &isAlive) {
 		"Receiver: ",
 		"Subject: "
 	};
+	std::string input;
 	for (int i = 0; i < 3; ++i) {
-		std::string input;
 		std::cout << text[i];
 		std::getline(std::cin, input);
-		// also restricts sender and receiver length
-		if (input.length() > 80) {
-			std::cout << "Input may not be longer than 80 characters" << std::endl;
+		if (i < 2) {
+			if (Validation::validateUsername(input)) {
+				std::cout << "Input may not be longer than 8 characters or consist of something else than [a-z][0-9]" << std::endl;
+				i--;
+				continue;
+			}
+		} else if (Validation::validateSubject(input)) { // check subject
+			std::cout << "Subject may not be longer than 80 characters" << std::endl;
 			i--;
 			continue;
 		}
@@ -26,22 +30,18 @@ void Commands::send(int fd, bool &isAlive) {
 			return;
 		}
 	}
-	char buffer[1024];
 	while (true) {
-		if (fgets(buffer, 1024, stdin) != NULL) {
-			// remove new-line signs from string at the end
-			buffer[strcspn(buffer, "\r\n")] = 0;
-			if (strcmp(buffer, ".") == 0) {
-				Socket::send(fd, ".", true, isAlive);
-				if (!isAlive) {
-					return;
-				}
-				break;
-			}
-			Socket::send(fd, std::string(buffer), true, isAlive);
+		std::getline(std::cin, input);
+		if (input.compare(".") == 0) {
+			Socket::send(fd, ".", true, isAlive);
 			if (!isAlive) {
 				return;
 			}
+			break;
+		}
+		Socket::send(fd, input, true, isAlive);
+		if (!isAlive) {
+			return;
 		}
 	}
 }
@@ -54,11 +54,12 @@ void Commands::list(int fd, bool& isAlive) {
 	std::string input;
 	while (true) {
 		std::cout << "Username: ";
-		std::cin >> input;
-		if (input.length() <= 80) {
-			break;
+		std::getline(std::cin, input);
+		if (Validation::validateUsername(input)) {
+			std::cout << "Input may not be longer than 8 characters or consist of something else than [a-z][0-9]" << std::endl;
+			continue;
 		}
-		std::cout << "Input may not be longer than 80 characters" << std::endl;
+		break;
 	}
 	Socket::send(fd, input, true, isAlive);
 	if (!isAlive) {

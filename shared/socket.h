@@ -1,4 +1,5 @@
 #pragma once
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -24,6 +25,6 @@ public:
 	static void shutdown(int fd);
 
 	// could be replaced with read and write
-	static void recv(int fd, char *buffer, bool sendAck, bool &isAlive);
+	static void recv(int fd, std::string &output, bool sendAck, bool &isAlive);
 	static void send(int fd, std::string input, bool awaitAck, bool &isAlive);
 };

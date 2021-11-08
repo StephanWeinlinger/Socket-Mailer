@@ -1,5 +1,9 @@
+#pragma once
+
 #include "../../shared/socket.h"
+#include "../../shared/validation.h"
 #include <vector>
+#include <sstream>
 
 class Commands {
 public:

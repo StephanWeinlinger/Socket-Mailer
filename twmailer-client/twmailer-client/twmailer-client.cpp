@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include "../../shared/socket.h"
 #include "commands.h"
+#include <sstream>
 
 void printUsage();
 void startCommunication();
@@ -53,29 +54,26 @@ void printUsage() {
 
 void startCommunication() {
 	// get welcome message
-	char buffer[1024];
+	std::string output;
 	bool isAlive = true;
-	Socket::recv(client_socket, buffer, false, isAlive);
-	std::cout << buffer;
+	Socket::recv(client_socket, output, false, isAlive);
+	std::cout << output;
 	while (!abortRequested && isAlive) {
 		std::cout << ">> ";
-		if (fgets(buffer, 1024, stdin) != NULL) {
-			// remove new-line signs from string at the end
-			buffer[strcspn(buffer, "\r\n")] = 0;
-			if (strcmp(buffer, "SEND") == 0) {
-				Commands::send(client_socket, isAlive);
-			} else if (strcmp(buffer, "LIST") == 0) {
-				Commands::list(client_socket, isAlive);
-			} else if (strcmp(buffer, "READ") == 0) {
-				Commands::read(client_socket, isAlive);
-			} else if (strcmp(buffer, "DEL") == 0) {
-				Commands::del(client_socket, isAlive);
-			} else if (strcmp(buffer, "QUIT") == 0) {
-				Commands::quit(client_socket, isAlive);
-				break;
-			} else {
-				std::cout << "Valid commands: [SEND] [LIST] [READ] [DEL] [QUIT]" << std::endl;
-			}
+		std::getline(std::cin, output);
+		if (output.compare("SEND") == 0) {
+			Commands::send(client_socket, isAlive);
+		} else if (output.compare("LIST") == 0) {
+			Commands::list(client_socket, isAlive);
+		} else if (output.compare("READ") == 0) {
+			Commands::read(client_socket, isAlive);
+		} else if (output.compare("DEL") == 0) {
+			Commands::del(client_socket, isAlive);
+		} else if (output.compare("QUIT") == 0) {
+			Commands::quit(client_socket, isAlive);
+			break;
+		} else {
+			std::cout << "Valid commands: [SEND] [LIST] [READ] [DEL] [QUIT]" << std::endl;
 		}
 
 	}
