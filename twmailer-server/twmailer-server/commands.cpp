@@ -2,6 +2,20 @@
 
 std::string Commands::_spool;
 
+std::vector<std::string> Commands::getDirectoryEntries(std::string path) {
+	std::vector<std::string> entries;
+	if (std::filesystem::is_directory(path)) {
+		for (auto const& entry : std::filesystem::directory_iterator(path)) {
+			// just to make sure nobody created junk folders inside the spool directory
+			if (std::filesystem::is_regular_file(entry)) {
+				std::string filename = entry.path().filename();
+				entries.push_back(filename);
+			}
+		}
+	}
+	return entries;
+}
+
 void Commands::send(int fd, bool& isAlive) {
 	std::string output;
 	std::vector<std::string> outputAll;
@@ -58,37 +72,49 @@ void Commands::list(int fd, bool& isAlive) {
 		isAlive = false;
 		return;
 	}
-	std::string username = output;
-	std::cout << username << std::endl;
 
-	// not working yet
-	/*std::vector<std::string> subjects;
-	std::string path = Commands::_spool + username;
+	std::string path = Commands::_spool + output;
+	std::vector<std::string> subjects;
+	std::vector<std::string> entries = Commands::getDirectoryEntries(path);
 
-	if (std::filesystem::is_directory(path)) {
-		for (auto const& entry : std::filesystem::directory_iterator(path)) {
-			std::string filename = entry.path().filename();
-			std::fstream input_fstream;
-			input_fstream.open(path + "/" + filename, std::fstream::in);
-			if (!input_fstream.is_open()) {
-				std::cerr << "Failed to open " << path << "/" << filename << '\n';
-			} else {
-				std::string line;
-				int counter = 1;
-				while (std::getline(input_fstream, line)) {
-					counter++;
-					if (counter == 3) {
-						break;
-					}
+	for (auto entry : entries) {
+		std::fstream input_fstream;
+		input_fstream.open(path + "/" + entry, std::fstream::in);
+		if (!input_fstream.is_open()) {
+			std::cerr << "Failed to open " << path << "/" << entry << '\n';
+		} else {
+			std::string line;
+			int counter = 0;
+			while (std::getline(input_fstream, line)) {
+				if (counter == 2) {
+					break;
 				}
-				subjects.push_back(line);
+				counter++;
 			}
-			input_fstream.close();
+			subjects.push_back(line);
 		}
-	} else {
-		std::cout << "no such directory found" << std::endl;
+		input_fstream.close();
 	}
-	std::cout << subjects[0] << std::endl;*/
+	
+	// send subject count
+	Socket::send(fd, std::to_string(subjects.size()), true, isAlive);
+	if (!isAlive) {
+		return;
+	}
+	// send subjects
+	for (auto subject : subjects) {
+		Socket::send(fd, subject, true, isAlive);
+		if (!isAlive) {
+			return;
+		}
+	}
+	// send filenames (not necessary, but for read and del nice to have)
+	for (auto entry : entries) {
+		Socket::send(fd, entry, true, isAlive);
+		if (!isAlive) {
+			return;
+		}
+	}
 }
 
 void Commands::read(int fd, bool& isAlive) {}
