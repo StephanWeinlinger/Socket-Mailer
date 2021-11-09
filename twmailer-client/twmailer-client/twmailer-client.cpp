@@ -40,8 +40,11 @@ int main(int argc, char* argv[]) {
 		std::cout << "Connection established" << std::endl;
 		startCommunication();
 	}
+	catch (isAliveException& e) {
+		std::cout << e.what();
+	}
 	catch (const char* msg) {
-		std::cout << msg << std::endl;
+		std::cout << msg;
 	}
 
 	shutdownClient();
@@ -56,25 +59,21 @@ void printUsage() {
 void startCommunication() {
 	// get welcome message
 	std::string output;
-	bool isAlive = true;
-	Socket::recv(client_socket, output, true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+	Socket::recv(client_socket, output, true);
 	std::cout << output;
-	while (!abortRequested && isAlive) {
+	while (!abortRequested) {
 		std::cout << ">> ";
 		std::getline(std::cin, output);
 		if (output.compare("SEND") == 0) {
-			Commands::send(client_socket, isAlive);
+			Commands::send(client_socket);
 		} else if (output.compare("LIST") == 0) {
-			Commands::list(client_socket, isAlive);
+			Commands::list(client_socket);
 		} else if (output.compare("READ") == 0) {
-			Commands::read(client_socket, isAlive);
+			Commands::read(client_socket);
 		} else if (output.compare("DEL") == 0) {
-			Commands::del(client_socket, isAlive);
+			Commands::del(client_socket);
 		} else if (output.compare("QUIT") == 0) {
-			Commands::quit(client_socket, isAlive);
+			Commands::quit(client_socket);
 			break;
 		} else {
 			// probably only happens on CTRL + C, so no need to clear std::cin

@@ -83,31 +83,28 @@ void printUsage() {
 }
 
 void startCommunication() {
-	std::string output;
-	bool isAlive = true;
-	// send welcome message
-	std::string input = "Welcome to the mail server!\nHave fun!\n";
-	Socket::send(client_socket, input, true, isAlive);
-	if (!isAlive) {
-		return;
+	try {
+		std::string output;
+		// send welcome message
+		std::string input = "Welcome to the mail server!\nHave fun!\n";
+		Socket::send(client_socket, input, true);
+		do {
+			Socket::recv(client_socket, output, true);
+			if (output.compare("SEND") == 0) {
+				Commands::send(client_socket);
+			} else if (output.compare("LIST") == 0) {
+				Commands::list(client_socket);
+			} else if (output.compare("READ") == 0) {
+				Commands::read(client_socket);
+			} else if (output.compare("DEL") == 0) {
+				Commands::del(client_socket);
+			} else if (output.compare("QUIT") == 0) {
+				break;
+			}
+		} while(!abortRequested);
+	} catch (isAliveException& e) {
+		std::cout << e.what() << std::endl;
 	}
-	do {
-		Socket::recv(client_socket, output, true, isAlive);
-		if (!isAlive) {
-			break;
-		}
-		if (output.compare("SEND") == 0) {
-			Commands::send(client_socket, isAlive);
-		} else if (output.compare("LIST") == 0) {
-			Commands::list(client_socket, isAlive);
-		} else if (output.compare("READ") == 0) {
-			Commands::read(client_socket, isAlive);
-		} else if (output.compare("DEL") == 0) {
-			Commands::del(client_socket, isAlive);
-		} else if (output.compare("QUIT") == 0) {
-			isAlive = false;
-		}
-	} while(!abortRequested && isAlive);
 
 	if (!abortRequested) {
 		Socket::shutdown(client_socket); // shutdown client

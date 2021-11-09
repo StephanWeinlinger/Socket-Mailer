@@ -2,7 +2,7 @@
 
 // helper function for read and delete
 // reads in username, displays messages, reads in index, sends index to server
-void Commands::chooseMessage(int fd, bool& isAlive, bool& error) {
+void Commands::chooseMessage(int fd, bool& error) {
 	std::string input;
 	while (true) {
 		std::cout << "Username: ";
@@ -17,17 +17,11 @@ void Commands::chooseMessage(int fd, bool& isAlive, bool& error) {
 		}
 		break;
 	}
-	Socket::send(fd, input, true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+	Socket::send(fd, input, true);
 
 	std::string output;
 	// receive filename count
-	Socket::recv(fd, output, true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+	Socket::recv(fd, output, true);
 	int count = std::stoi(output);
 	if (count == 0) {
 		error = true;
@@ -36,10 +30,7 @@ void Commands::chooseMessage(int fd, bool& isAlive, bool& error) {
 	}
 	// receive filenames
 	for (int i = 0; i < count; ++i) {
-		Socket::recv(fd, output, true, isAlive);
-		if (!isAlive) {
-			return;
-		}
+		Socket::recv(fd, output, true);
 		std::cout << "[" << i << "] " << output << std::endl;
 	}
 	int index;
@@ -57,17 +48,11 @@ void Commands::chooseMessage(int fd, bool& isAlive, bool& error) {
 		index = std::stoi(input); // should be safe, since it gets checked before
 		break;
 	}
-	Socket::send(fd, std::to_string(index), true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+	Socket::send(fd, std::to_string(index), true);
 }
 
-void Commands::send(int fd, bool &isAlive) {
-	Socket::send(fd, "SEND", true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+void Commands::send(int fd) {
+	Socket::send(fd, "SEND", true);
 	std::vector<std::string> text = {
 		"Sender: ",
 		"Receiver: ",
@@ -91,10 +76,7 @@ void Commands::send(int fd, bool &isAlive) {
 			i--;
 			continue;
 		}
-		Socket::send(fd, input, true, isAlive);
-		if (!isAlive) {
-			return;
-		}
+		Socket::send(fd, input, true);
 	}
 	while (true) {
 		std::getline(std::cin, input);
@@ -102,24 +84,15 @@ void Commands::send(int fd, bool &isAlive) {
 			return;
 		}
 		if (input.compare(".") == 0) {
-			Socket::send(fd, ".", true, isAlive);
-			if (!isAlive) {
-				return;
-			}
+			Socket::send(fd, ".", true);
 			break;
 		}
-		Socket::send(fd, input, true, isAlive);
-		if (!isAlive) {
-			return;
-		}
+		Socket::send(fd, input, true);
 	}
 }
 
-void Commands::list(int fd, bool& isAlive) {
-	Socket::send(fd, "LIST", true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+void Commands::list(int fd) {
+	Socket::send(fd, "LIST", true);
 	std::string input;
 	while (true) {
 		std::cout << "Username: ";
@@ -133,44 +106,32 @@ void Commands::list(int fd, bool& isAlive) {
 		}
 		break;
 	}
-	Socket::send(fd, input, true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+	Socket::send(fd, input, true);
 	// receive subject count and subjects
 	std::vector<std::string> outputAll;
 	std::string output;
 	// receive subject count
-	Socket::recv(fd, output, true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+	Socket::recv(fd, output, true);
 	outputAll.push_back(output);
 	int count = std::stoi(output);
 	// receive subjects and filenames
 	for (int i = 0; i < count * 2; ++i) {
-		Socket::recv(fd, output, true, isAlive);
-		if (!isAlive) {
-			return;
-		}
+		Socket::recv(fd, output, true);
 		outputAll.push_back(output);
 	}
 	// output in form of [index] filename: subject
-	std::cout << "User " << input << " has " << count << " messages!" << std::endl;
+	std::cout << "User " << input << " has " << count << " message(s)!" << std::endl;
 	for (int i = 0; i < count; ++i) {
 		std::cout << "[" << i << "] " << outputAll[i + 1 + count] << ": " << outputAll[i + 1] << std::endl;
 	}
 }
 
-void Commands::read(int fd, bool& isAlive) {
-	Socket::send(fd, "READ", true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+void Commands::read(int fd) {
+	Socket::send(fd, "READ", true);
 	// error flag if no message is found
 	bool error = false;
-	Commands::chooseMessage(fd, isAlive, error);
-	if (!isAlive || error) {
+	Commands::chooseMessage(fd, error);
+	if (error) {
 		return;
 	}
 	// receive message data
@@ -180,19 +141,13 @@ void Commands::read(int fd, bool& isAlive) {
 		"Receiver: ",
 		"Subject: "
 	};
-	Socket::recv(fd, output, true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+	Socket::recv(fd, output, true);
 	int count = std::stoi(output);
 	if (count == 0) {
 		std::cout << "Messages could not be found or was deleted" << std::endl;
 	} else {
 		for (int i = 0; i < count; ++i) {
-			Socket::recv(fd, output, true, isAlive);
-			if (!isAlive) {
-				return;
-			}
+			Socket::recv(fd, output, true);
 			if (i < 3) {
 				std::cout << text[i] << output << std::endl;
 				continue;
@@ -202,23 +157,17 @@ void Commands::read(int fd, bool& isAlive) {
 	}
 }
 
-void Commands::del(int fd, bool& isAlive) {
-	Socket::send(fd, "DEL", true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+void Commands::del(int fd) {
+	Socket::send(fd, "DEL", true);
 	// error flag if no message is found
 	bool error;
-	Commands::chooseMessage(fd, isAlive, error);
-	if (!isAlive || error) {
+	Commands::chooseMessage(fd, error);
+	if (error) {
 		return;
 	}
 	// receive answer
 	std::string output;
-	Socket::recv(fd, output, true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+	Socket::recv(fd, output, true);
 	if (output.compare("PASS") == 0) {
 		std::cout << "Message was successfully deleted" << std::endl;
 	} else if (output.compare("ERROR") == 0) {
@@ -226,9 +175,6 @@ void Commands::del(int fd, bool& isAlive) {
 	}
 }
 
-void Commands::quit(int fd, bool& isAlive) {
-	Socket::send(fd, "QUIT", true, isAlive);
-	if (!isAlive) {
-		return;
-	}
+void Commands::quit(int fd) {
+	Socket::send(fd, "QUIT", true);
 }

@@ -77,36 +77,31 @@ int Socket::_buffersize = 1024;
 // buffer gets the data received
 // if sendAck is true an acknowledgement gets sent
 // isAlive gets set to false if the connected client or server disconnected
-void Socket::recv(int fd, std::string &output, bool sendAck, bool &isAlive) {
+void Socket::recv(int fd, std::string &output, bool sendAck) {
     char buffer[_buffersize];
     int size = ::recv(fd, buffer, _buffersize - 1, 0);
     if (size == -1) {
-        std::cerr << "Socket couldn't read data" << std::endl;
-        isAlive = false;
-        return;
+        throw isAliveException("Socket couldn't read data");
     } else if (size == 0) {
-        std::cerr << "Connection closed remote socket" << std::endl;
-        isAlive = false;
-        return;
+        throw isAliveException("Connection closed remote socket");
     }
     buffer[size] = '\0'; // add null terminator on last index
     output = buffer;
     if (sendAck) {
-        Socket::send(fd, "OK", false, isAlive);
+        Socket::send(fd, "OK", false);
     }
 }
 
 // input holds data that needs to be sent
 // if awaitAck is true the client or server waits for an answer ("OK", but doesn't get checked)
 // isAlive is used if an acknowledgement is waited for, sinced its used in Socket::recv()
-void Socket::send(int fd, std::string input, bool awaitAck, bool &isAlive) {
+void Socket::send(int fd, std::string input, bool awaitAck) {
     int total = 0;
     int bytesleft = input.length();
     int current;
     while (total < input.length()) {
         current = ::send(fd, input.c_str() + total, bytesleft, 0);
         if (current == -1) {
-            //throw "Socket couldn't send data";
             std::cerr << "Socket couldn't send data" << std::endl;
         }
         total = total + current;
@@ -116,7 +111,7 @@ void Socket::send(int fd, std::string input, bool awaitAck, bool &isAlive) {
     if (input.length() > 0) {
         if (awaitAck) {
             std::string output;
-            Socket::recv(fd, output, false, isAlive);
+            Socket::recv(fd, output, false);
             // buffer could be checked if it contains OK, but not really needed
         }
 
