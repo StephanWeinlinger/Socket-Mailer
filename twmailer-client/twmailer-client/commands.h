@@ -7,6 +7,8 @@
 
 class Commands {
 public:
+	static void chooseMessage(int fd, bool& isAlive, bool& error);
+
 	static void send(int fd, bool &isAlive);
 	static void list(int fd, bool& isAlive);
 	static void read(int fd, bool& isAlive);

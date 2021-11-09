@@ -87,9 +87,15 @@ void startCommunication() {
 	bool isAlive = true;
 	// send welcome message
 	std::string input = "Welcome to the mail server!\nHave fun!\n";
-	Socket::send(client_socket, input, false, isAlive);
+	Socket::send(client_socket, input, true, isAlive);
+	if (!isAlive) {
+		return;
+	}
 	do {
 		Socket::recv(client_socket, output, true, isAlive);
+		if (!isAlive) {
+			break;
+		}
 		if (output.compare("SEND") == 0) {
 			Commands::send(client_socket, isAlive);
 		} else if (output.compare("LIST") == 0) {
@@ -99,7 +105,7 @@ void startCommunication() {
 		} else if (output.compare("DEL") == 0) {
 			Commands::del(client_socket, isAlive);
 		} else if (output.compare("QUIT") == 0) {
-			break;
+			isAlive = false;
 		}
 	} while(!abortRequested && isAlive);
 

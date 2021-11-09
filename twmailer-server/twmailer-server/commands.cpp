@@ -16,6 +16,45 @@ std::vector<std::string> Commands::getDirectoryEntries(std::string path) {
 	return entries;
 }
 
+// used for read and delete
+// returns path to message
+void Commands::chooseMessage(int fd, bool &isAlive, bool &error, std::string &fullpath) {
+	std::string output;
+	Socket::recv(fd, output, true, isAlive);
+	if (!isAlive || Validation::validateUsername(output)) {
+		// if client trys to send invalid data shut it down
+		isAlive = false;
+		return;
+	}
+
+	std::string path = Commands::_spool + output;
+	std::vector<std::string> entries = Commands::getDirectoryEntries(path);
+	int count = entries.size();
+	// send filename count
+	Socket::send(fd, std::to_string(count), true, isAlive);
+	// count check is after sending, since client also needs the information
+	if (!isAlive || (count == 0)) {
+		error = true;
+		return;
+	}
+	// send filenames
+	for (auto entry : entries) {
+		Socket::send(fd, entry, true, isAlive);
+		if (!isAlive) {
+			return;
+		}
+	}
+	// receive message index
+	Socket::recv(fd, output, true, isAlive);
+	if (!isAlive || Validation::validateIndex(output, count)) {
+		// if client trys to send invalid data shut it down
+		isAlive = false;
+		return;
+	}
+	int index = std::stoi(output);
+	fullpath = path + "/" + entries[index];
+}
+
 void Commands::send(int fd, bool& isAlive) {
 	std::string output;
 	std::vector<std::string> outputAll;
@@ -117,6 +156,67 @@ void Commands::list(int fd, bool& isAlive) {
 	}
 }
 
-void Commands::read(int fd, bool& isAlive) {}
+void Commands::read(int fd, bool& isAlive) {
+	bool error = false;
+	std::string fullpath;
+	Commands::chooseMessage(fd, isAlive, error, fullpath);
+	if (!isAlive || error) {
+		return;
+	}
+	std::vector<std::string> message;
+	error = false; // reset error
+	if (!std::filesystem::is_regular_file(fullpath)) {
+		error = true;
+	}
+	std::fstream input_fstream;
+	input_fstream.open(fullpath, std::fstream::in);
+	if (!input_fstream.is_open()) {
+		error = true;
+		std::cerr << "Failed to open " << fullpath << '\n';
+	} else {
+		std::string line;
+		while (std::getline(input_fstream, line)) {
+			message.push_back(line);
+		}
+	}
+	input_fstream.close();
+	// check if error occured (file was probably deleted)
+	if (error) {
+		Socket::send(fd, "0", true, isAlive);
+		if (!isAlive) {
+			return;
+		}
+	} else {
+		// size needs to be a different variable, otherwise loop doesn't work
+		int size = message.size();
+		for (int i = -1; i < size; ++i) {
+			if (i == -1) {
+				// send line count
+				Socket::send(fd, std::to_string(size), true, isAlive);
+			} else {
+				// send actual message
+				Socket::send(fd, message[i], true, isAlive);
+			}
+			if (!isAlive) {
+				return;
+			}
+		}
+	}
+}
 
-void Commands::del(int fd, bool& isAlive) {}
+void Commands::del(int fd, bool& isAlive) {
+	bool error = false;
+	std::string fullpath;
+	Commands::chooseMessage(fd, isAlive, error, fullpath);
+	if (!isAlive || error) {
+		return;
+	}
+	if (std::filesystem::remove(fullpath)) {
+		Socket::send(fd, "PASS", true, isAlive);
+	} else {
+		Socket::send(fd, "ERROR", true, isAlive);
+	}
+	if (!isAlive) {
+		return;
+	}
+}

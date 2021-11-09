@@ -12,6 +12,7 @@ public:
 
 	// helper function
 	static std::vector<std::string> getDirectoryEntries(std::string path);
+	static void chooseMessage(int fd, bool& isAlive, bool& error, std::string &fullpath);
 
 	static void send(int fd, bool& isAlive);
 	static void list(int fd, bool& isAlive);

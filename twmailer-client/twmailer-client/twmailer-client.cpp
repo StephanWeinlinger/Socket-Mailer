@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
+	// TODO maybe add isAlive exception
 	try {
 		// create client socket
 		client_socket = Socket::socket();
@@ -56,7 +57,10 @@ void startCommunication() {
 	// get welcome message
 	std::string output;
 	bool isAlive = true;
-	Socket::recv(client_socket, output, false, isAlive);
+	Socket::recv(client_socket, output, true, isAlive);
+	if (!isAlive) {
+		return;
+	}
 	std::cout << output;
 	while (!abortRequested && isAlive) {
 		std::cout << ">> ";
