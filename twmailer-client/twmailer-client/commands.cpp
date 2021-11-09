@@ -7,6 +7,10 @@ void Commands::chooseMessage(int fd, bool& isAlive, bool& error) {
 	while (true) {
 		std::cout << "Username: ";
 		std::getline(std::cin, input);
+		if (std::cin.fail()) {
+			error = true;
+			return;
+		}
 		if (Validation::validateUsername(input)) {
 			std::cout << "Input may not be longer than 8 characters or consist of something else than [a-z][0-9]" << std::endl;
 			continue;
@@ -42,6 +46,10 @@ void Commands::chooseMessage(int fd, bool& isAlive, bool& error) {
 	while (true) {
 		std::cout << "Index of message to read: ";
 		std::getline(std::cin, input);
+		if (std::cin.fail()) {
+			error = true;
+			return;
+		}
 		if (Validation::validateIndex(input, count)) {
 			std::cout << "Index out of range or invalid format!" << std::endl;
 			continue;
@@ -69,6 +77,9 @@ void Commands::send(int fd, bool &isAlive) {
 	for (int i = 0; i < 3; ++i) {
 		std::cout << text[i];
 		std::getline(std::cin, input);
+		if (std::cin.fail()) {
+			return;
+		}
 		if (i < 2) {
 			if (Validation::validateUsername(input)) {
 				std::cout << "Input may not be longer than 8 characters or consist of something else than [a-z][0-9]" << std::endl;
@@ -87,6 +98,9 @@ void Commands::send(int fd, bool &isAlive) {
 	}
 	while (true) {
 		std::getline(std::cin, input);
+		if (std::cin.fail()) {
+			return;
+		}
 		if (input.compare(".") == 0) {
 			Socket::send(fd, ".", true, isAlive);
 			if (!isAlive) {
@@ -110,6 +124,9 @@ void Commands::list(int fd, bool& isAlive) {
 	while (true) {
 		std::cout << "Username: ";
 		std::getline(std::cin, input);
+		if (std::cin.fail()) {
+			return;
+		}
 		if (Validation::validateUsername(input)) {
 			std::cout << "Input may not be longer than 8 characters or consist of something else than [a-z][0-9]" << std::endl;
 			continue;

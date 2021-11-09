@@ -66,13 +66,8 @@ void Socket::connect(int fd, const struct sockaddr_in &addr) {
 
 // shutdown and close socket
 void Socket::shutdown(int fd) {
-    if (::shutdown(fd, SHUT_RDWR) == -1) {
-        //throw "Socket couldn't shutdown";
-        std::cerr << "Socket couldn't shutdown" << std::endl;
-    }
     // close listening socket
     if (::close(fd) == -1) {
-        //throw "Socket couldn't close";
         std::cerr << "Socket couldn't close" << std::endl;
     }
 }
@@ -86,12 +81,10 @@ void Socket::recv(int fd, std::string &output, bool sendAck, bool &isAlive) {
     char buffer[_buffersize];
     int size = ::recv(fd, buffer, _buffersize - 1, 0);
     if (size == -1) {
-        //throw "Socket couldn't read data";
         std::cerr << "Socket couldn't read data" << std::endl;
-        isAlive = false; // maybe no termination needed, not sure
+        isAlive = false;
         return;
     } else if (size == 0) {
-        //throw "Connection closed remote socket";
         std::cerr << "Connection closed remote socket" << std::endl;
         isAlive = false;
         return;

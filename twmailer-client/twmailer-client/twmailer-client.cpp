@@ -77,20 +77,23 @@ void startCommunication() {
 			Commands::quit(client_socket, isAlive);
 			break;
 		} else {
+			// probably only happens on CTRL + C, so no need to clear std::cin
+			if (std::cin.fail()) {
+				break;
+			}
 			std::cout << "Valid commands: [SEND] [LIST] [READ] [DEL] [QUIT]" << std::endl;
 		}
-
 	}
 }
 
 void signalHandler(int sig) {
 	abortRequested = 1;
-	std::cout << "\nShutting client down..." << std::endl;
 	shutdownClient();
 }
 
 void shutdownClient() {
 	if (client_socket != -1) {
+		std::cout << "\nShutting client down..." << std::endl;
 		Socket::shutdown(client_socket);
 		client_socket = -1;
 	}
