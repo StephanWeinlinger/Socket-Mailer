@@ -102,9 +102,9 @@ void Commands::list(int fd) {
 
 	std::string path = Commands::_spool + output;
 	std::vector<std::string> subjects;
-	std::vector<std::string> entries = Commands::getDirectoryEntries(path);
+	std::vector<std::string> entries;
 
-	for (auto entry : entries) {
+	for (auto entry : Commands::getDirectoryEntries(path)) {
 		std::fstream input_fstream;
 		input_fstream.open(path + "/" + entry, std::fstream::in);
 		if (!input_fstream.is_open()) {
@@ -118,6 +118,9 @@ void Commands::list(int fd) {
 				}
 				counter++;
 			}
+			// build entries vector here, otherwise there could be more entries than subjects
+			// since some files might not exist anymore
+			entries.push_back(entry);
 			subjects.push_back(line);
 		}
 		input_fstream.close();
@@ -129,7 +132,7 @@ void Commands::list(int fd) {
 	for (auto subject : subjects) {
 		Socket::send(fd, subject, true);
 	}
-	// send filenames (not necessary, but for read and del nice to have)
+	// send filenames (not necessary, but for read and delete nice to have)
 	for (auto entry : entries) {
 		Socket::send(fd, entry, true);
 	}

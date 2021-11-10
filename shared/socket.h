@@ -1,6 +1,11 @@
 #pragma once
 
 #include "exception.h"
+
+#include <iostream>
+#include <string>
+#include <thread>
+#include <vector>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -10,8 +15,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
-#include <iostream>
-#include <string>
 
 class Socket {
 public:
@@ -25,7 +28,6 @@ public:
 	static void connect(int fd, const struct sockaddr_in &addr);
 	static void shutdown(int fd);
 
-	// could be replaced with read and write
 	static void recv(int fd, std::string &output, bool sendAck);
 	static void send(int fd, std::string input, bool awaitAck);
 };

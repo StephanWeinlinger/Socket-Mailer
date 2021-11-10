@@ -1,9 +1,7 @@
-﻿#include <iostream>
-#include <filesystem>
-#include <thread>
+﻿#include "commands.h"
 #include "../../shared/socket.h"
-#include "commands.h"
-#include <sys/wait.h>
+
+#include <filesystem>
 
 namespace fs = std::filesystem;
 
@@ -67,7 +65,6 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}
-	// TODO: use actually exceptions and not just strings
 	catch (const char* msg) {
 		std::cout << msg << std::endl;
 	}

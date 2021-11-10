@@ -1,6 +1,6 @@
-﻿#include <iostream>
+﻿#include "commands.h"
 #include "../../shared/socket.h"
-#include "commands.h"
+
 #include <sstream>
 
 void printUsage();
@@ -25,7 +25,6 @@ int main(int argc, char* argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	// TODO maybe add isAlive exception
 	try {
 		// create client socket
 		client_socket = Socket::socket();
@@ -44,7 +43,7 @@ int main(int argc, char* argv[]) {
 		std::cout << e.what();
 	}
 	catch (const char* msg) {
-		std::cout << msg;
+		std::cout << msg << std::endl;
 	}
 
 	shutdownClient();

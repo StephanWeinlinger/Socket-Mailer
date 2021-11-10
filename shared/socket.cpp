@@ -10,9 +10,10 @@ int Socket::socket() {
 }
 
 // only needed for welcome port on server
+// used only once, but it has something to do with sockets, so it fits here
 void Socket::setsockoptServer(int fd) {
     int reuseValue = -1;
-    // set options for welcome socket, dont know what 4 and 5 do
+    // set options for welcome socket
     if (setsockopt(fd,
         SOL_SOCKET,
         SO_REUSEADDR,
@@ -21,7 +22,7 @@ void Socket::setsockoptServer(int fd) {
         throw "Welcome socket options [reuseValue] could not be set";
     }
 
-    // set options for welcome socket, dont know what 4 and 5 do
+    // set options for welcome socket
     if (setsockopt(fd,
         SOL_SOCKET,
         SO_REUSEPORT,
@@ -64,7 +65,7 @@ void Socket::connect(int fd, const struct sockaddr_in &addr) {
     }
 }
 
-// shutdown and close socket
+// close socket
 void Socket::shutdown(int fd) {
     // close listening socket
     if (::close(fd) == -1) {
@@ -76,7 +77,7 @@ int Socket::_buffersize = 1024;
 
 // buffer gets the data received
 // if sendAck is true an acknowledgement gets sent
-// isAlive gets set to false if the connected client or server disconnected
+// an exception is thrown if connected client or server disconnect
 void Socket::recv(int fd, std::string &output, bool sendAck) {
     char buffer[_buffersize];
     int size = ::recv(fd, buffer, _buffersize - 1, 0);
@@ -94,7 +95,6 @@ void Socket::recv(int fd, std::string &output, bool sendAck) {
 
 // input holds data that needs to be sent
 // if awaitAck is true the client or server waits for an answer ("OK", but doesn't get checked)
-// isAlive is used if an acknowledgement is waited for, sinced its used in Socket::recv()
 void Socket::send(int fd, std::string input, bool awaitAck) {
     int total = 0;
     int bytesleft = input.length();
@@ -107,7 +107,7 @@ void Socket::send(int fd, std::string input, bool awaitAck) {
         total = total + current;
         bytesleft = bytesleft - current;
     }
-    // length check, since receiver wouldn't answer
+    // length check, since receiver wont answer if input is empty
     if (input.length() > 0) {
         if (awaitAck) {
             std::string output;

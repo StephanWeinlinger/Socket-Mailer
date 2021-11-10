@@ -16,7 +16,6 @@ bool Validation::validateSubject(std::string subject) {
 
 bool Validation::validateIndex(std::string input, int count) {
 	int index;
-	// really bad practice, but it works (TODO: maybe rework)
 	try {
 		index = std::stoi(input);
 	} catch (...) {
