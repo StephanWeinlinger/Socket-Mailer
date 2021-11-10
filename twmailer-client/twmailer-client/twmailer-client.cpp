@@ -38,11 +38,9 @@ int main(int argc, char* argv[]) {
 		Socket::connect(client_socket, server_address);
 		std::cout << "Connection established" << std::endl;
 		startCommunication();
-	}
-	catch (isAliveException& e) {
+	} catch (isAliveException& e) {
 		std::cout << e.what();
-	}
-	catch (const char* msg) {
+	} catch (const char* msg) {
 		std::cout << msg << std::endl;
 	}
 

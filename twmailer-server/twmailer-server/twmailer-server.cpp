@@ -64,8 +64,7 @@ int main(int argc, char* argv[]) {
 				startCommunication();
 			}
 		}
-	}
-	catch (const char* msg) {
+	} catch (const char* msg) {
 		std::cout << msg << std::endl;
 	}
 	// if exception occurs client has to get shut down too
@@ -98,7 +97,7 @@ void startCommunication() {
 			} else if (output.compare("QUIT") == 0) {
 				break;
 			}
-		} while(!abortRequested);
+		} while (!abortRequested);
 	} catch (isAliveException& e) {
 		std::cout << e.what() << std::endl;
 	}

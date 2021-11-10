@@ -34,8 +34,8 @@ void Socket::setsockoptServer(int fd) {
 
 // bind address to socket
 // only used by server, since the client just needs to connect
-void Socket::bind(int fd, const struct sockaddr_in &addr) {
-    if (::bind(fd, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
+void Socket::bind(int fd, const struct sockaddr_in& addr) {
+    if (::bind(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
         throw "Socket couldn't be bound";
     }
 }
@@ -49,18 +49,18 @@ void Socket::listen(int fd, int queue) {
 
 // accept incoming connections and return file descriptor
 // addr_new can also be used for logging ip of client
-int Socket::accept(int fd, const struct sockaddr_in &addr_new) {
+int Socket::accept(int fd, const struct sockaddr_in& addr_new) {
     int fd_new;
     socklen_t addrlen = sizeof(struct sockaddr_in);
-    if ((fd_new = ::accept(fd, (struct sockaddr*) &addr_new, &addrlen)) == -1) {
+    if ((fd_new = ::accept(fd, (struct sockaddr*)&addr_new, &addrlen)) == -1) {
         throw "Socket couldn't accept incoming connection";
     }
     return fd_new;
 }
 
 // connect file descriptor to specific address
-void Socket::connect(int fd, const struct sockaddr_in &addr) {
-    if (::connect(fd, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
+void Socket::connect(int fd, const struct sockaddr_in& addr) {
+    if (::connect(fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
         throw "Socket couldn't connect - Connection Error";
     }
 }
@@ -78,7 +78,7 @@ int Socket::_buffersize = 1024;
 // buffer gets the data received
 // if sendAck is true an acknowledgement gets sent
 // an exception is thrown if connected client or server disconnect
-void Socket::recv(int fd, std::string &output, bool sendAck) {
+void Socket::recv(int fd, std::string& output, bool sendAck) {
     char buffer[_buffersize];
     int size = ::recv(fd, buffer, _buffersize - 1, 0);
     if (size == -1) {

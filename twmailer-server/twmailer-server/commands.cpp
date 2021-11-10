@@ -18,7 +18,7 @@ std::vector<std::string> Commands::getDirectoryEntries(std::string path) {
 
 // used for read and delete
 // returns path to message
-void Commands::chooseMessage(int fd, bool &error, std::string &fullpath) {
+void Commands::chooseMessage(int fd, bool& error, std::string& fullpath) {
 	std::string output;
 	Socket::recv(fd, output, true);
 	if (Validation::validateUsername(output)) {
@@ -77,19 +77,20 @@ void Commands::send(int fd) {
 	if (!std::filesystem::is_directory(path)) {
 		std::filesystem::create_directory(path);
 	}
-	
+
 	std::fstream output_fstream;
-	// TODO: filename gets replaced with uuid in the future
 	output_fstream.open(path + "/" + outputAll[0], std::fstream::out);
 	if (!output_fstream.is_open()) {
 		std::cerr << "Failed to open " << path << '\n';
-	}
-	else {
-		for(std::string i : outputAll) {
+		Socket::send(fd, "ERROR", true);
+		return;
+	} else {
+		for (std::string i : outputAll) {
 			output_fstream << i << std::endl;
 		}
+		output_fstream.close();
 	}
-	output_fstream.close();
+	Socket::send(fd, "PASS", true);
 }
 
 void Commands::list(int fd) {
@@ -122,10 +123,10 @@ void Commands::list(int fd) {
 			// since some files might not exist anymore
 			entries.push_back(entry);
 			subjects.push_back(line);
+			input_fstream.close();
 		}
-		input_fstream.close();
 	}
-	
+
 	// send subject count
 	Socket::send(fd, std::to_string(subjects.size()), true);
 	// send subjects
@@ -160,8 +161,8 @@ void Commands::read(int fd) {
 		while (std::getline(input_fstream, line)) {
 			message.push_back(line);
 		}
+		input_fstream.close();
 	}
-	input_fstream.close();
 	// check if error occured (file was probably deleted)
 	if (error) {
 		Socket::send(fd, "0", true);

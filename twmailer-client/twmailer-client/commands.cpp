@@ -89,6 +89,15 @@ void Commands::send(int fd) {
 		}
 		Socket::send(fd, input, true);
 	}
+
+	// receive answer
+	std::string output;
+	Socket::recv(fd, output, true);
+	if (output.compare("PASS") == 0) {
+		std::cout << "Message was successfully sent" << std::endl;
+	} else if (output.compare("ERROR") == 0) {
+		std::cout << "Message was not sent" << std::endl;
+	}
 }
 
 void Commands::list(int fd) {
