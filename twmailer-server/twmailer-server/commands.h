@@ -7,10 +7,13 @@
 #include <fstream>
 #include <uuid/uuid.h>
 #include <ldap.h>
+#include <thread>
 
 class Commands {
 public:
 	static std::string _spool;
+	static std::mutex _mutexDirectory;
+	static std::mutex _mutexFile;
 
 	// helper function
 	static std::vector<std::string> getDirectoryEntries(std::string path);

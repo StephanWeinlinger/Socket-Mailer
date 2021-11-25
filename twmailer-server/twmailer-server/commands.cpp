@@ -2,6 +2,10 @@
 
 std::string Commands::_spool;
 
+std::mutex Commands::_mutexDirectory;
+
+std::mutex Commands::_mutexFile;
+
 std::vector<std::string> Commands::getDirectoryEntries(std::string path) {
 	std::vector<std::string> entries;
 	if (std::filesystem::is_directory(path)) {
@@ -74,9 +78,12 @@ void Commands::send(int fd) {
 	}
 
 	std::string path = Commands::_spool + outputAll[1];
+	// lock, since to clients could send to the same new receiver at the same time
+	Commands::_mutexDirectory.lock();
 	if (!std::filesystem::is_directory(path)) {
 		std::filesystem::create_directory(path);
 	}
+	Commands::_mutexDirectory.unlock();
 
 	// create uuid
 	uuid_t bin;
@@ -84,6 +91,7 @@ void Commands::send(int fd) {
 	uuid_generate(bin);
 	uuid_unparse(bin, filename);
 	std::fstream output_fstream;
+	std::unique_lock<std::mutex> lock(Commands::_mutexFile); // lock and unlock if out of scope, since Socket::send could throw an exception
 	output_fstream.open(path + "/" + std::string(filename), std::fstream::out);
 	if (!output_fstream.is_open()) {
 		std::cerr << "Failed to open " << path << '\n';
@@ -95,6 +103,7 @@ void Commands::send(int fd) {
 		}
 		output_fstream.close();
 	}
+	lock.unlock();
 	Socket::send(fd, "PASS", true);
 }
 
@@ -110,6 +119,8 @@ void Commands::list(int fd) {
 	std::vector<std::string> subjects;
 	std::vector<std::string> entries;
 
+	// no need for unique_lock, since there shouldn't be any exceptions
+	Commands::_mutexFile.lock();
 	for (auto entry : Commands::getDirectoryEntries(path)) {
 		std::fstream input_fstream;
 		input_fstream.open(path + "/" + entry, std::fstream::in);
@@ -131,6 +142,7 @@ void Commands::list(int fd) {
 			input_fstream.close();
 		}
 	}
+	Commands::_mutexFile.unlock();
 
 	// send subject count
 	Socket::send(fd, std::to_string(subjects.size()), true);
@@ -157,6 +169,7 @@ void Commands::read(int fd) {
 		error = true;
 	}
 	std::fstream input_fstream;
+	Commands::_mutexFile.lock();
 	input_fstream.open(fullpath, std::fstream::in);
 	if (!input_fstream.is_open()) {
 		error = true;
@@ -168,6 +181,7 @@ void Commands::read(int fd) {
 		}
 		input_fstream.close();
 	}
+	Commands::_mutexFile.unlock();
 	// check if error occured (file was probably deleted)
 	if (error) {
 		Socket::send(fd, "0", true);
@@ -193,9 +207,12 @@ void Commands::del(int fd) {
 	if (error) {
 		return;
 	}
+	// unique_lock, since Socket::send could throw an exception
+	std::unique_lock<std::mutex> lock(Commands::_mutexFile);
 	if (std::filesystem::remove(fullpath)) {
 		Socket::send(fd, "PASS", true);
 	} else {
 		Socket::send(fd, "ERROR", true);
 	}
+	lock.unlock();
 }
