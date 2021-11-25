@@ -2,7 +2,6 @@
 #include "../../shared/socket.h"
 
 #include <filesystem>
-
 namespace fs = std::filesystem;
 
 void printUsage();
@@ -23,7 +22,7 @@ int main(int argc, char* argv[]) {
 		std::cerr << "mail-spool-directory path invalid" << std::endl;
 		return EXIT_FAILURE;
 	}
-
+	
 	// set spool directory and add slash if needed
 	Commands::_spool = std::string(argv[2]);
 	if (Commands::_spool[Commands::_spool.length()] != '/') {

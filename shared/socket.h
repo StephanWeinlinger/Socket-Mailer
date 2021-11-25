@@ -1,7 +1,6 @@
 #pragma once
 
 #include "exception.h"
-
 #include <iostream>
 #include <string>
 #include <thread>

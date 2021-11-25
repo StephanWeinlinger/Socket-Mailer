@@ -78,8 +78,13 @@ void Commands::send(int fd) {
 		std::filesystem::create_directory(path);
 	}
 
+	// create uuid
+	uuid_t bin;
+	char filename[40];
+	uuid_generate(bin);
+	uuid_unparse(bin, filename);
 	std::fstream output_fstream;
-	output_fstream.open(path + "/" + outputAll[0], std::fstream::out);
+	output_fstream.open(path + "/" + std::string(filename), std::fstream::out);
 	if (!output_fstream.is_open()) {
 		std::cerr << "Failed to open " << path << '\n';
 		Socket::send(fd, "ERROR", true);

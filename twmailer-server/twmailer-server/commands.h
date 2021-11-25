@@ -5,6 +5,8 @@
 
 #include <filesystem>
 #include <fstream>
+#include <uuid/uuid.h>
+#include <ldap.h>
 
 class Commands {
 public:
