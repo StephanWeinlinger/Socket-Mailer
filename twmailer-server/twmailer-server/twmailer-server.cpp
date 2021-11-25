@@ -1,17 +1,18 @@
 ﻿#include "commands.h"
 #include "../../shared/socket.h"
 
+#include <thread>
 #include <filesystem>
+#include <atomic>
 namespace fs = std::filesystem;
 
 void printUsage();
-void startCommunication();
+void startCommunication(int client_socket);
 void signalHandler(int sig);
-void shutdownServer();
 
 int welcome_socket = -1;
-int client_socket = -1;
-sig_atomic_t abortRequested = 0;
+std::atomic<int> abortRequested = 0;
+std::atomic<int> threadCount = 0;
 
 int main(int argc, char* argv[]) {
 	if (argc != 3) {
@@ -57,18 +58,26 @@ int main(int argc, char* argv[]) {
 		while (!abortRequested) {
 			std::cout << "Waiting for connections..." << std::endl;
 			struct sockaddr_in client_address;
-			client_socket = Socket::accept(welcome_socket, client_address);
+			int client_socket = Socket::accept(welcome_socket, client_address);
 			std::cout << "Client connected from " << inet_ntoa(client_address.sin_addr) << " on port " << ntohs(client_address.sin_port) << std::endl;
 			if (!abortRequested) {
-				startCommunication();
+				std::thread(startCommunication, client_socket).detach();
 			}
 		}
 	} catch (const char* msg) {
 		std::cout << msg << std::endl;
 	}
-	// if exception occurs client has to get shut down too
-	// on normal termination only the server gets shutdown right here
-	shutdownServer();
+	if (welcome_socket = !- 1) {
+		Socket::shutdown(welcome_socket);
+	}
+	// wait for all threads to finish
+	// TODO might be good to force finishing
+	if (threadCount > 0) {
+		std::cout << "Waiting for all threads to finish..." << std::endl;
+		while (threadCount > 0) {
+			sleep(1); // so it doesn't get spammed
+		}
+	}
 	return EXIT_SUCCESS;
 }
 
@@ -77,8 +86,9 @@ void printUsage() {
 	exit(EXIT_FAILURE);
 }
 
-void startCommunication() {
+void startCommunication(int client_socket) {
 	try {
+		threadCount++; // increase thread count
 		std::string output;
 		// send welcome message
 		std::string input = "Welcome to the mail server!\nHave fun!\n";
@@ -100,27 +110,13 @@ void startCommunication() {
 	} catch (isAliveException& e) {
 		std::cout << e.what() << std::endl;
 	}
-
-	if (!abortRequested) {
-		Socket::shutdown(client_socket); // shutdown client
-		client_socket = -1;
-	}
+	Socket::shutdown(client_socket); // shutdown client
+	threadCount--; // decrease thread count
 }
 
 void signalHandler(int sig) {
 	abortRequested = 1;
 	std::cout << "\nShutting server down..." << std::endl;
-	shutdownServer();
-}
-
-void shutdownServer() {
-	if (welcome_socket != -1) {
-		Socket::shutdown(welcome_socket);
-		welcome_socket = -1;
-
-	}
-	if (client_socket != -1) {
-		Socket::shutdown(client_socket);
-		client_socket = -1;
-	}
+	Socket::shutdown(welcome_socket);
+	welcome_socket = -1;
 }
