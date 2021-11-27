@@ -1,4 +1,5 @@
 ﻿#include "commands.h"
+#include "ldap.h"
 #include "../../shared/socket.h"
 
 #include <thread>
@@ -40,6 +41,8 @@ int main(int argc, char* argv[]) {
 	}
 
 	try {
+		// start ldap connection
+		Ldap::startConnection("ldap://ldap.technikum-wien.at:389");
 		// create welcome socket
 		welcome_socket = Socket::socket();
 		// set socket options for welcome socket

@@ -6,7 +6,6 @@
 #include <filesystem>
 #include <fstream>
 #include <uuid/uuid.h>
-#include <ldap.h>
 #include <thread>
 
 class Commands {
