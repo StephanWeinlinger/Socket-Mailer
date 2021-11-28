@@ -96,20 +96,38 @@ void startCommunication(int client_socket) {
 		// send welcome message
 		std::string input = "Welcome to the mail server!\nHave fun!\n";
 		Socket::send(client_socket, input, true);
-		do {
+
+		bool isLoggedIn = false;
+		std::string username = "";
+		// loop before login
+		while(!abortRequested) {
 			Socket::recv(client_socket, output, true);
-			if (output.compare("SEND") == 0) {
-				Commands::send(client_socket);
-			} else if (output.compare("LIST") == 0) {
-				Commands::list(client_socket);
-			} else if (output.compare("READ") == 0) {
-				Commands::read(client_socket);
-			} else if (output.compare("DEL") == 0) {
-				Commands::del(client_socket);
+			if (output.compare("LOGIN") == 0) {
+				isLoggedIn = Commands::login(client_socket, username);
+				break;
 			} else if (output.compare("QUIT") == 0) {
 				break;
 			}
-		} while (!abortRequested);
+		}
+		if (isLoggedIn) {
+			// loop after login
+			while(!abortRequested && isLoggedIn) {
+				Socket::recv(client_socket, output, true);
+				if (output.compare("SEND") == 0) {
+					Commands::send(client_socket, username);
+				} else if (output.compare("LIST") == 0) {
+					Commands::list(client_socket, username);
+				} else if (output.compare("READ") == 0) {
+					Commands::read(client_socket, username);
+				} else if (output.compare("DEL") == 0) {
+					Commands::del(client_socket, username);
+				} else if (output.compare("QUIT") == 0) {
+					break;
+				}
+			}
+		} else {
+			// blacklist
+		}
 	} catch (isAliveException& e) {
 		std::cout << e.what() << std::endl;
 	}

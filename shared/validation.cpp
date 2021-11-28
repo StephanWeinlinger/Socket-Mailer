@@ -26,3 +26,10 @@ bool Validation::validateIndex(std::string input, int count) {
 	}
 	return true;
 }
+
+bool Validation::validatePassword(std::string password) {
+	if (password.length() > 0 && password.length() <= 200) {
+		return false;
+	}
+	return true;
+}

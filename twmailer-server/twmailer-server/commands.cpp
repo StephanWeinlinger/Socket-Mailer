@@ -22,7 +22,7 @@ std::vector<std::string> Commands::getDirectoryEntries(std::string path) {
 
 // used for read and delete
 // returns path to message
-void Commands::chooseMessage(int fd, bool& error, std::string& fullpath) {
+void Commands::chooseMessage(int fd, bool &error, std::string &fullpath) {
 	std::string output;
 	Socket::recv(fd, output, true);
 	if (Validation::validateUsername(output)) {
@@ -54,7 +54,7 @@ void Commands::chooseMessage(int fd, bool& error, std::string& fullpath) {
 	fullpath = path + "/" + entries[index];
 }
 
-void Commands::send(int fd) {
+void Commands::send(int fd, std::string username) {
 	std::string output;
 	std::vector<std::string> outputAll;
 	for (int i = 0; i < 3; ++i) {
@@ -107,7 +107,7 @@ void Commands::send(int fd) {
 	Socket::send(fd, "PASS", true);
 }
 
-void Commands::list(int fd) {
+void Commands::list(int fd, std::string username) {
 	std::string output;
 	Socket::recv(fd, output, true);
 	if (Validation::validateUsername(output)) {
@@ -156,7 +156,7 @@ void Commands::list(int fd) {
 	}
 }
 
-void Commands::read(int fd) {
+void Commands::read(int fd, std::string username) {
 	bool error = false;
 	std::string fullpath;
 	Commands::chooseMessage(fd, error, fullpath);
@@ -200,7 +200,7 @@ void Commands::read(int fd) {
 	}
 }
 
-void Commands::del(int fd) {
+void Commands::del(int fd, std::string username) {
 	bool error = false;
 	std::string fullpath;
 	Commands::chooseMessage(fd, error, fullpath);
@@ -215,4 +215,26 @@ void Commands::del(int fd) {
 		Socket::send(fd, "ERROR", true);
 	}
 	lock.unlock();
+}
+
+bool Commands::login(int fd, std::string &username) {
+	// receive username
+	Socket::recv(fd, username, true);
+	if (Validation::validateUsername(username)) {
+		throw isAliveException("Socket received invalid input");
+	}
+	// receive password
+	std::string password;
+	Socket::recv(fd, password, true);
+	if (Validation::validatePassword(password)) {
+		throw isAliveException("Socket received invalid input");
+	}
+	// check credentials
+	if (Ldap::checkCredentials(username, password)) {
+		Socket::send(fd, "PASS", true);
+		return true;
+	} else {
+		Socket::send(fd, "ERROR", true);
+	}
+	return false;
 }

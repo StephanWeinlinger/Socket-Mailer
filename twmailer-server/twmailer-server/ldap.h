@@ -1,6 +1,7 @@
+#pragma once
+
 #include <iostream>
 #include <string>
-
 #include <ldap.h>
 
 class Ldap {

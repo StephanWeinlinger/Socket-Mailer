@@ -58,6 +58,27 @@ void startCommunication() {
 	std::string output;
 	Socket::recv(client_socket, output, true);
 	std::cout << output;
+	// loop before login
+	while (!abortRequested) {
+		std::cout << ">> ";
+		std::getline(std::cin, output);
+		if (output.compare("LOGIN") == 0) {
+			if (Commands::login(client_socket)) {
+				break;
+			}
+			return;
+		} else if (output.compare("QUIT") == 0) {
+			Commands::quit(client_socket);
+			return;
+		} else {
+			// probably only happens on CTRL + C, so no need to clear std::cin
+			if (std::cin.fail()) {
+				break;
+			}
+			std::cout << "Valid commands: [LOGIN] [QUIT]" << std::endl;
+		}
+	}
+	// loop after login
 	while (!abortRequested) {
 		std::cout << ">> ";
 		std::getline(std::cin, output);

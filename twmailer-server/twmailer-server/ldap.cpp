@@ -22,13 +22,16 @@ void Ldap::startConnection(std::string ldapUri) {
 }
 
 bool Ldap::checkCredentials(std::string username, std::string password) {
-	char* passwordBind;
+	// modify username
+	std::string usernameBind = "uid=" + username + ",ou=people,dc=technikum-wien,dc=at";
+	// reassign password so it is stored as a char pointer
+	char passwordBind[256];
 	strcpy(passwordBind, password.c_str());
 	BerValue bindCredentials;
-	bindCredentials.bv_val = passwordBind;
+	bindCredentials.bv_val = (char *) passwordBind;
 	bindCredentials.bv_len = strlen(passwordBind);
 	BerValue* serverCredentials;
-	if (ldap_sasl_bind_s(Ldap::ldapHandle, username.c_str(), LDAP_SASL_SIMPLE, &bindCredentials, nullptr, nullptr, &serverCredentials) != LDAP_SUCCESS) {
+	if (ldap_sasl_bind_s(Ldap::ldapHandle, usernameBind.c_str(), LDAP_SASL_SIMPLE, &bindCredentials, NULL, NULL, &serverCredentials) != LDAP_SUCCESS) {
 		return false;
 	}
 	return true;

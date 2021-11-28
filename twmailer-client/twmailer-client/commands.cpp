@@ -187,3 +187,74 @@ void Commands::del(int fd) {
 void Commands::quit(int fd) {
 	Socket::send(fd, "QUIT", true);
 }
+
+bool Commands::login(int fd) {
+	Socket::send(fd, "LOGIN", true);
+	// read username
+	std::string input;
+	while (true) {
+		std::cout << "Username: ";
+		std::getline(std::cin, input);
+		if (std::cin.fail()) {
+			return false;
+		}
+		if (Validation::validateUsername(input)) {
+			std::cout << "Username may not be longer than 8 characters or consist of something else than [a-z][0-9]" << std::endl;
+			continue;
+		}
+		break;
+	}
+	Socket::send(fd, input, true);
+	// read password
+	while (true) {
+		std::cout << "Password: ";
+		input = Commands::readPassword();
+		if (Validation::validatePassword(input)) {
+			std::cout << "Password may not be longer than 200 characters" << std::endl;
+			continue;
+		}
+		break;
+	}
+	Socket::send(fd, input, true);
+	// receive answer
+	std::string output;
+	Socket::recv(fd, output, true);
+	if (output.compare("PASS") == 0) {
+		std::cout << "Successfully logged in" << std::endl;
+		return true;
+	} else if (output.compare("ERROR") == 0) {
+		std::cout << "Invalid Credentials" << std::endl;
+	}
+	return false;
+}
+
+std::string Commands::readPassword() {
+	const char BACKSPACE = 127;
+	const char RETURN = 10;
+
+	unsigned char ch = 0;
+	std::string password;
+	while (true) {
+		int input;
+		struct termios t_old, t_new;
+		tcgetattr(STDIN_FILENO, &t_old);
+		t_new = t_old;
+		t_new.c_lflag &= ~(ICANON | ECHO);
+		tcsetattr(STDIN_FILENO, TCSANOW, &t_new);
+		input = getchar();
+		tcsetattr(STDIN_FILENO, TCSANOW, &t_old);
+		ch = input;
+		if (ch == RETURN) {
+			break;
+		} else if (ch == BACKSPACE) {
+			if (password.length() != 0) {
+				password.resize(password.length() - 1);
+			}
+		} else {
+			password += ch;
+
+		}
+	}
+	std::cout << std::endl;
+	return password;
+}
