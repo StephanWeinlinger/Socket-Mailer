@@ -3,22 +3,6 @@
 // helper function for read and delete
 // reads in username, displays messages, reads in index, sends index to server
 void Commands::chooseMessage(int fd, bool& error) {
-	std::string input;
-	while (true) {
-		std::cout << "Username: ";
-		std::getline(std::cin, input);
-		if (std::cin.fail()) {
-			error = true;
-			return;
-		}
-		if (Validation::validateUsername(input)) {
-			std::cout << "Input may not be longer than 8 characters or consist of something else than [a-z][0-9]" << std::endl;
-			continue;
-		}
-		break;
-	}
-	Socket::send(fd, input, true);
-
 	std::string output;
 	// receive filename count
 	Socket::recv(fd, output, true);
@@ -33,6 +17,7 @@ void Commands::chooseMessage(int fd, bool& error) {
 		Socket::recv(fd, output, true);
 		std::cout << "[" << i << "] " << output << std::endl;
 	}
+	std::string input;
 	int index;
 	while (true) {
 		std::cout << "Index of message to read: ";
@@ -54,18 +39,17 @@ void Commands::chooseMessage(int fd, bool& error) {
 void Commands::send(int fd) {
 	Socket::send(fd, "SEND", true);
 	std::vector<std::string> text = {
-		"Sender: ",
 		"Receiver: ",
 		"Subject: "
 	};
 	std::string input;
-	for (int i = 0; i < 3; ++i) {
+	for (int i = 0; i < 2; ++i) {
 		std::cout << text[i];
 		std::getline(std::cin, input);
 		if (std::cin.fail()) {
 			return;
 		}
-		if (i < 2) {
+		if (i == 0) {
 			if (Validation::validateUsername(input)) {
 				std::cout << "Input may not be longer than 8 characters or consist of something else than [a-z][0-9]" << std::endl;
 				i--;
@@ -102,20 +86,6 @@ void Commands::send(int fd) {
 
 void Commands::list(int fd) {
 	Socket::send(fd, "LIST", true);
-	std::string input;
-	while (true) {
-		std::cout << "Username: ";
-		std::getline(std::cin, input);
-		if (std::cin.fail()) {
-			return;
-		}
-		if (Validation::validateUsername(input)) {
-			std::cout << "Input may not be longer than 8 characters or consist of something else than [a-z][0-9]" << std::endl;
-			continue;
-		}
-		break;
-	}
-	Socket::send(fd, input, true);
 	// receive subject count and subjects
 	std::vector<std::string> outputAll;
 	std::string output;
@@ -129,7 +99,7 @@ void Commands::list(int fd) {
 		outputAll.push_back(output);
 	}
 	// output in form of [index] filename: subject
-	std::cout << "User " << input << " has " << count << " message(s)!" << std::endl;
+	std::cout << "You have " << count << " message(s)!" << std::endl;
 	for (int i = 0; i < count; ++i) {
 		std::cout << "[" << i << "] " << outputAll[i + 1 + count] << ": " << outputAll[i + 1] << std::endl;
 	}

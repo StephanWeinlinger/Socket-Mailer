@@ -98,7 +98,7 @@ void startCommunication(int client_socket) {
 		Socket::send(client_socket, input, true);
 
 		bool isLoggedIn = false;
-		std::string username = "";
+		std::string username;
 		// loop before login
 		while(!abortRequested) {
 			Socket::recv(client_socket, output, true);

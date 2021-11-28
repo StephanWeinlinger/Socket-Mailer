@@ -22,15 +22,8 @@ std::vector<std::string> Commands::getDirectoryEntries(std::string path) {
 
 // used for read and delete
 // returns path to message
-void Commands::chooseMessage(int fd, bool &error, std::string &fullpath) {
-	std::string output;
-	Socket::recv(fd, output, true);
-	if (Validation::validateUsername(output)) {
-		// if client tries to send invalid data shut it down
-		throw isAliveException("Socket received invalid input");
-	}
-
-	std::string path = Commands::_spool + output;
+void Commands::chooseMessage(int fd, bool &error, std::string &fullpath, std::string username) {
+	std::string path = Commands::_spool + username;
 	std::vector<std::string> entries = Commands::getDirectoryEntries(path);
 	int count = entries.size();
 	// send filename count
@@ -45,6 +38,7 @@ void Commands::chooseMessage(int fd, bool &error, std::string &fullpath) {
 		Socket::send(fd, entry, true);
 	}
 	// receive message index
+	std::string output;
 	Socket::recv(fd, output, true);
 	if (Validation::validateIndex(output, count)) {
 		// if client tries to send invalid data shut it down
@@ -57,9 +51,10 @@ void Commands::chooseMessage(int fd, bool &error, std::string &fullpath) {
 void Commands::send(int fd, std::string username) {
 	std::string output;
 	std::vector<std::string> outputAll;
-	for (int i = 0; i < 3; ++i) {
+	outputAll.push_back(username); // insert username into message
+	for (int i = 0; i < 2; ++i) {
 		Socket::recv(fd, output, true);
-		if (i < 2) {
+		if (i == 0) {
 			if (Validation::validateUsername(output)) {
 				throw isAliveException("Socket received invalid input");
 			}
@@ -108,14 +103,7 @@ void Commands::send(int fd, std::string username) {
 }
 
 void Commands::list(int fd, std::string username) {
-	std::string output;
-	Socket::recv(fd, output, true);
-	if (Validation::validateUsername(output)) {
-		// if client trys to send invalid data shut it down
-		throw isAliveException("Socket received invalid input");
-	}
-
-	std::string path = Commands::_spool + output;
+	std::string path = Commands::_spool + username;
 	std::vector<std::string> subjects;
 	std::vector<std::string> entries;
 
@@ -159,7 +147,7 @@ void Commands::list(int fd, std::string username) {
 void Commands::read(int fd, std::string username) {
 	bool error = false;
 	std::string fullpath;
-	Commands::chooseMessage(fd, error, fullpath);
+	Commands::chooseMessage(fd, error, fullpath, username);
 	if (error) {
 		return;
 	}
@@ -203,7 +191,7 @@ void Commands::read(int fd, std::string username) {
 void Commands::del(int fd, std::string username) {
 	bool error = false;
 	std::string fullpath;
-	Commands::chooseMessage(fd, error, fullpath);
+	Commands::chooseMessage(fd, error, fullpath, username);
 	if (error) {
 		return;
 	}

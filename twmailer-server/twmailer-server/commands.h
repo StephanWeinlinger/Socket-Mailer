@@ -17,7 +17,7 @@ public:
 
 	// helper function
 	static std::vector<std::string> getDirectoryEntries(std::string path);
-	static void chooseMessage(int fd, bool &error, std::string &fullpath);
+	static void chooseMessage(int fd, bool &error, std::string &fullpath, std::string username);
 
 	static void send(int fd, std::string username);
 	static void list(int fd, std::string username);
