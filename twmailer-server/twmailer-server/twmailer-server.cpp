@@ -34,6 +34,8 @@ int main(int argc, char* argv[]) {
 
 	// initialize blacklist
 	Blacklist::initialize(Commands::_spool);
+	// clean blacklist
+	Blacklist::cleanup();
 
 	struct sigaction sa;
 	sa.sa_handler = signalHandler;
@@ -98,8 +100,7 @@ void startCommunication(int client_socket, std::string client_ip) {
 	try {
 		threadCount++; // increase thread count
 		if (Blacklist::checkIP(client_ip)) { // check if ip is banned (checked inside thread to not block the main thread)
-			Socket::shutdown(client_socket); // shutdown client
-			threadCount--;
+			throw isAliveException("Blacklisted client tried to connect with IP: " + client_ip);
 		}
 		std::string output;
 		// send welcome message
@@ -145,6 +146,7 @@ void startCommunication(int client_socket, std::string client_ip) {
 	} catch (isAliveException& e) {
 		std::cout << e.what() << std::endl;
 	}
+	Blacklist::cleanup(); // not optimal to call it here
 	Socket::shutdown(client_socket); // shutdown client
 	threadCount--; // decrease thread count
 }
