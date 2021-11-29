@@ -8,7 +8,7 @@
 namespace fs = std::filesystem;
 
 void printUsage();
-void startCommunication(int client_socket);
+void startCommunication(int client_socket, std::string client_ip);
 void signalHandler(int sig);
 
 int welcome_socket = -1;
@@ -62,9 +62,10 @@ int main(int argc, char* argv[]) {
 			std::cout << "Waiting for connections..." << std::endl;
 			struct sockaddr_in client_address;
 			int client_socket = Socket::accept(welcome_socket, client_address);
-			std::cout << "Client connected from " << inet_ntoa(client_address.sin_addr) << " on port " << ntohs(client_address.sin_port) << std::endl;
+			std::string client_ip = inet_ntoa(client_address.sin_addr);
+			std::cout << "Client connected from " << client_ip << " on port " << ntohs(client_address.sin_port) << std::endl;
 			if (!abortRequested) {
-				std::thread(startCommunication, client_socket).detach();
+				std::thread(startCommunication, client_socket, client_ip).detach();
 			}
 		}
 	} catch (const char* msg) {
@@ -81,6 +82,7 @@ int main(int argc, char* argv[]) {
 			sleep(1); // so it doesn't get spammed
 		}
 	}
+	Ldap::closeConnection();
 	return EXIT_SUCCESS;
 }
 
@@ -89,7 +91,7 @@ void printUsage() {
 	exit(EXIT_FAILURE);
 }
 
-void startCommunication(int client_socket) {
+void startCommunication(int client_socket, std::string client_ip) {
 	try {
 		threadCount++; // increase thread count
 		std::string output;
@@ -100,14 +102,19 @@ void startCommunication(int client_socket) {
 		bool isLoggedIn = false;
 		std::string username;
 		// loop before login
+		int attemptCounter = 0;
 		while(!abortRequested) {
+			// break if user used 3 attempts or successfully logged in
+			if (attemptCounter == 3 || isLoggedIn) {
+				break;
+			}
 			Socket::recv(client_socket, output, true);
 			if (output.compare("LOGIN") == 0) {
 				isLoggedIn = Commands::login(client_socket, username);
-				break;
 			} else if (output.compare("QUIT") == 0) {
 				break;
 			}
+			attemptCounter++;
 		}
 		if (isLoggedIn) {
 			// loop after login
@@ -125,8 +132,8 @@ void startCommunication(int client_socket) {
 					break;
 				}
 			}
-		} else {
-			// blacklist
+		} else if (!isLoggedIn && attemptCounter == 3) {
+			// blacklist ip
 		}
 	} catch (isAliveException& e) {
 		std::cout << e.what() << std::endl;

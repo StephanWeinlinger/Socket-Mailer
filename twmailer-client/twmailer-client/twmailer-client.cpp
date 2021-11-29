@@ -59,14 +59,19 @@ void startCommunication() {
 	Socket::recv(client_socket, output, true);
 	std::cout << output;
 	// loop before login
+	int attemptCounter = 0;
 	while (!abortRequested) {
+		if (attemptCounter == 3) {
+			std::cout << "Try again in 1 minute" << std::endl;
+			return;
+		}
 		std::cout << ">> ";
 		std::getline(std::cin, output);
 		if (output.compare("LOGIN") == 0) {
 			if (Commands::login(client_socket)) {
 				break;
 			}
-			return;
+			attemptCounter++;
 		} else if (output.compare("QUIT") == 0) {
 			Commands::quit(client_socket);
 			return;

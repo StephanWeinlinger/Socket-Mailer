@@ -73,7 +73,7 @@ void Commands::send(int fd, std::string username) {
 	}
 
 	std::string path = Commands::_spool + outputAll[1];
-	// lock, since to clients could send to the same new receiver at the same time
+	// lock, since two clients could send to the same new receiver at the same time
 	Commands::_mutexDirectory.lock();
 	if (!std::filesystem::is_directory(path)) {
 		std::filesystem::create_directory(path);
@@ -195,14 +195,14 @@ void Commands::del(int fd, std::string username) {
 	if (error) {
 		return;
 	}
-	// unique_lock, since Socket::send could throw an exception
-	std::unique_lock<std::mutex> lock(Commands::_mutexFile);
-	if (std::filesystem::remove(fullpath)) {
+	Commands::_mutexFile.lock();
+	bool success = std::filesystem::remove(fullpath);
+	Commands::_mutexFile.unlock();
+	if (success) {
 		Socket::send(fd, "PASS", true);
 	} else {
 		Socket::send(fd, "ERROR", true);
 	}
-	lock.unlock();
 }
 
 bool Commands::login(int fd, std::string &username) {
