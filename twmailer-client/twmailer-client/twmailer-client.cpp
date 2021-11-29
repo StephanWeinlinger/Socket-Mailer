@@ -62,7 +62,6 @@ void startCommunication() {
 	int attemptCounter = 0;
 	while (!abortRequested) {
 		if (attemptCounter == 3) {
-			std::cout << "Try again in 1 minute" << std::endl;
 			return;
 		}
 		std::cout << ">> ";

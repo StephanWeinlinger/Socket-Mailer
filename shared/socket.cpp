@@ -71,6 +71,7 @@ void Socket::shutdown(int fd) {
     if (::close(fd) == -1) {
         std::cerr << "Socket couldn't close" << std::endl;
     }
+    std::cout << "socket was shut down" << std::endl;
 }
 
 int Socket::_buffersize = 1024;

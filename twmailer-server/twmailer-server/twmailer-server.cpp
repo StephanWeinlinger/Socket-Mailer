@@ -1,5 +1,6 @@
 ﻿#include "commands.h"
 #include "ldap.h"
+#include "blacklist.h"
 #include "../../shared/socket.h"
 
 #include <thread>
@@ -30,6 +31,9 @@ int main(int argc, char* argv[]) {
 	if (Commands::_spool[Commands::_spool.length()] != '/') {
 		Commands::_spool = Commands::_spool + "/";
 	}
+
+	// initialize blacklist
+	Blacklist::initialize(Commands::_spool);
 
 	struct sigaction sa;
 	sa.sa_handler = signalHandler;
@@ -75,7 +79,6 @@ int main(int argc, char* argv[]) {
 		Socket::shutdown(welcome_socket);
 	}
 	// wait for all threads to finish
-	// TODO might be good to force finishing
 	if (threadCount > 0) {
 		std::cout << "Waiting for all threads to finish..." << std::endl;
 		while (threadCount > 0) {
@@ -94,6 +97,10 @@ void printUsage() {
 void startCommunication(int client_socket, std::string client_ip) {
 	try {
 		threadCount++; // increase thread count
+		if (Blacklist::checkIP(client_ip)) { // check if ip is banned (checked inside thread to not block the main thread)
+			Socket::shutdown(client_socket); // shutdown client
+			threadCount--;
+		}
 		std::string output;
 		// send welcome message
 		std::string input = "Welcome to the mail server!\nHave fun!\n";
@@ -133,7 +140,7 @@ void startCommunication(int client_socket, std::string client_ip) {
 				}
 			}
 		} else if (!isLoggedIn && attemptCounter == 3) {
-			// blacklist ip
+			Blacklist::addIP(client_ip);
 		}
 	} catch (isAliveException& e) {
 		std::cout << e.what() << std::endl;
